@@ -2,9 +2,6 @@
 *.log
 *.opendb
 .vs/Battleship/v16/.suo
-.vs/Battleship/v16/.suo
-.vs/Battleship/v16/.suo
-.vs/Battleship/v16/.suo
 *.db
 *.ipch
 *.filters
@@ -15,3 +12,4 @@ Debug/Battleship.exe
 *.pdb
 Debug/Battleship.vcxproj.FileListAbsolute.txt
 *.obj
+
