@@ -13,3 +13,8 @@ Debug/Battleship.exe
 Debug/Battleship.vcxproj.FileListAbsolute.txt
 *.obj
 
+*.db-shm
+*.db-wal
+/.vs
+fwwefd.sln
+*.user
