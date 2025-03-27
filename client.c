@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h> 
 
-#include <pthread.h>
+
 
 #ifdef _WIN32
     //Librerias sockets para windows
@@ -11,10 +10,12 @@
     #include <ws2tcpip.h>
     #include <windows.h>
     #pragma comment(lib, "ws2_32.lib")
-
+    #include <thread>
 #else
     //Librerias sockets para linux
     #include <arpa/inet.h>
+    #include <unistd.h> 
+    #include <pthread.h>
     
 #endif
 
