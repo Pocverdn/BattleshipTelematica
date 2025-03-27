@@ -102,12 +102,12 @@ int main() {
             return 1;
         }
     #else
-        
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
-        perror("Setsockopt failed");
-        return 1;
-    }
-        #endif
+        int opt = 1;
+        if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
+            perror("Setsockopt failed");
+            return 1;
+        }
+    #endif
         
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY;
