@@ -11,13 +11,12 @@ struct ship {
 struct attack {
 	unsigned char  posX;//4 bits
 	unsigned char  posY;//4 bits
-
 };
 
 //Siempre son 12 barcos.
 
-unsigned char* encode (struct ship arr[]) { //Podemos añadir una variable "K" para que la cantidad de barcos sea dynamica.
-	static unsigned char encoded[14] = { 0 }; //Con variable dynamica el tamaño de este char seria (Roof)K*3/2. cada barco es de 12 bits, y lo que mandamos esta en bytes, lo mismo aplica para las otras funciones.
+unsigned char* encode (struct ship arr[]) { //Podemos aï¿½adir una variable "K" para que la cantidad de barcos sea dynamica.
+	static unsigned char encoded[14] = { 0 }; //Con variable dynamica el tamaï¿½o de este char seria (Roof)K*3/2. cada barco es de 12 bits, y lo que mandamos esta en bytes, lo mismo aplica para las otras funciones.
 	unsigned char bPos=0;
 
 	for (char i=0; i < 9;i++) {
@@ -29,7 +28,6 @@ unsigned char* encode (struct ship arr[]) { //Podemos añadir una variable "K" pa
 		bPos = bPos + 3;
 		encoded[bPos / 8] = encoded[bPos / 8] | (arr[i].dir << bPos % 8);
 		bPos = bPos + 1;
-
 		
 	}
 	printf("%x", encoded[0]);
@@ -86,9 +84,7 @@ struct attack decodeAttack(unsigned char A) {
 }
 
 
-//El main es solo para pruebas, lo quitamos despues.
-int main(int argc, char* argv[]) {
-	struct ship navy[9];
+void initialize(struct ship navy[]){
 	navy[0].posX = 1;
 	navy[0].posY = 1;
 	navy[0].size = 2;
@@ -125,12 +121,14 @@ int main(int argc, char* argv[]) {
 	navy[8].posY = 9;
 	navy[8].size = 2;
 	navy[8].dir = 1;
-
+}
+//El main es solo para pruebas, lo quitamos despues.
+int main(int argc, char* argv[]) {
+	struct ship navy[9];
+	initialize(navy);
 	//decode(encode(navy));
 	decode(encode(navy));
-
 	struct attack a;
-
 	a.posX = 7;
 	a.posY = 6;
 	printf("%X", decodeAttack(encodeAttack(a)).posY);
