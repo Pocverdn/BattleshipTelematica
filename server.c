@@ -8,10 +8,10 @@
 #include <pthread.h>
 
 // Puerto
-#define PORT 8080
+//#define PORT 8080
 
 //14 bytes para envio de posiciones de barcos - 1 byte para comfirmación de disparo
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 14
 #define BUFFER_SIZE_Confirm 1
 
 typedef struct sockaddr_in sockaddr_in;
@@ -48,7 +48,7 @@ void *handle_client(void *client_socket) {
     return NULL;
 }
 
-int setup_server(Server *server) {
+int setup_server(Server *server, char* IP, char* port) {
     server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server->server_fd == -1) {
         perror("Socket creation failed");
@@ -62,8 +62,8 @@ int setup_server(Server *server) {
     }
 
     server->address.sin_family = AF_INET;
-    server->address.sin_addr.s_addr = INADDR_ANY;
-    server->address.sin_port = htons(PORT);
+    server->address.sin_addr.s_addr = inet_addr(IP);
+    server->address.sin_port = htons(atoi(port));
 
     if (bind(server->server_fd, (sockaddr *)&server->address, sizeof(server->address)) < 0) {
         perror("Bind failed");
@@ -75,7 +75,7 @@ int setup_server(Server *server) {
         return -1;
     }
 
-    printf("Server is listening on port %d...\n", PORT);
+    printf("Server is listening on port %d...\n", atoi(port));
     return 0;
 }
 
@@ -99,9 +99,9 @@ void accept_clients(Server *server) {
 }
 
 
-int main() {
+int main(int argc, char* argv[]) {
     Server server;
-    if (setup_server(&server) < 0) {
+    if (setup_server(&server,argv[1] ,argv[2]) < 0) {
         return 1;
     }
     accept_clients(&server);
