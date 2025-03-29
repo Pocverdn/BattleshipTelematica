@@ -48,17 +48,17 @@ void *handle_client(void *client_socket) {
     return NULL;
 }
 
-int setup_server(Server *server, char* IP, char* port) {
+inline int setup_server(Server *server, char* IP, char* port) {
     server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server->server_fd == -1) {
         perror("Socket creation failed");
-        return -1;
+        exit(-1);
     }
     
     int opt = 1;
     if (setsockopt(server->server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
         perror("Setsockopt failed");
-        return -1;
+        exit(-1);
     }
 
     server->address.sin_family = AF_INET;
@@ -67,19 +67,19 @@ int setup_server(Server *server, char* IP, char* port) {
 
     if (bind(server->server_fd, (sockaddr *)&server->address, sizeof(server->address)) < 0) {
         perror("Bind failed");
-        return -1;
+        exit(-1);
     }
     
     if (listen(server->server_fd, 3) < 0) {
         perror("Listen failed");
-        return -1;
+        exit(-1);
     }
 
     printf("Server is listening on port %d...\n", atoi(port));
     return 0;
 }
 
-void accept_clients(Server *server) {
+inline void accept_clients(Server *server) {
     int addrlen = sizeof(server->address);
     pthread_t thread_id;
 
