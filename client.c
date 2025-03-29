@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
 #ifdef _WIN32
     //Librerias sockets para windows
     #include <winsock2.h> 
@@ -70,6 +68,22 @@ void parse_config(const char *filename, Config *config) {
     }
     fclose(file);
 }
+
+// Metodos
+
+
+void get_public_ip(char *ip, size_t size) {
+    FILE *fp = popen("curl -s https://api64.ipify.org", "r");
+    if (fp == NULL) {
+        perror("Error al ejecutar curl");
+        return;
+    }
+
+    fgets(ip, size, fp); // Leer la IP pública en la variable
+    pclose(fp);
+}
+
+
 
 #ifdef _WIN32
 
@@ -210,6 +224,7 @@ void parse_config(const char *filename, Config *config) {
         struct sockaddr_in serv_addr;
         char* hello = "Hello from client";
         char buffer[1024] = { 0 };
+<<<<<<< HEAD
         //Extract config variables
             char server_ip[256] = "";
             int PORTLINUX = 0;
@@ -217,6 +232,14 @@ void parse_config(const char *filename, Config *config) {
             printf("Server IP: %s\n", server_ip);
             printf("Port: %d\n", port);
         //
+=======
+
+        char public_ip[50];
+        get_public_ip(public_ip, sizeof(public_ip));
+        public_ip[strcspn(public_ip, "\n")] = 0;
+
+        
+>>>>>>> 21b744646fefe8e9adcd7470466283d6ad767658
         if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
             printf("\n Socket creation error \n");
             return -1;
