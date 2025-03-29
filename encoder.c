@@ -30,6 +30,7 @@ unsigned char* encode (struct ship arr[]) { //Podemos a�adir una variable "K" 
 		bPos = bPos + 1;
 		
 	}
+	printf("El primer byte de la cadena codificada: ");
 	printf("%x", encoded[0]);
 	printf("\n");
 	return encoded;
@@ -55,7 +56,9 @@ struct ship* decode(unsigned char arr[]) {
 
 	}
 	//printf("%x", *arr);
+	printf("El pos X del tercer barco: ");
 	printf("%x", decode[3].posX);
+	printf("\n");
 	return decode;
 }
 
@@ -66,6 +69,7 @@ unsigned char encodeAttack(struct attack A) {
 	encoded =  A.posX;
 	encoded = encoded | (A.posY << 4);
 
+	printf("El byte del ataque: ");
 	printf("%x", encoded);
 	printf("\n");
 	return encoded;
@@ -78,7 +82,8 @@ struct attack decodeAttack(unsigned char A) {
 	decoded.posX = A & 0xF;
 	decoded.posY = (A & 0xF0) >> 4;
 
-	printf("%x", decoded);
+	printf("La posX del ataque: ");
+	printf("%x", decoded.posX);
 	printf("\n");
 	return decoded;
 }
@@ -131,6 +136,7 @@ int main(int argc, char* argv[]) {
 	struct attack a;
 	a.posX = 7;
 	a.posY = 6;
+	printf("La posición Y del ataque: ");
 	printf("%X", decodeAttack(encodeAttack(a)).posY);
 	//printf("%x", *(cNavy+3));
 	//printf("%X",cNavy);
