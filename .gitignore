@@ -21,3 +21,4 @@ fwwefd.sln
 /Debug
 *.sln
 *.idb
+*.enc

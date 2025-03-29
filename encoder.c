@@ -11,7 +11,7 @@ struct ship {
 //Siempre son 12 barcos.
 
 unsigned char* encode (struct ship arr[]) {
-	unsigned char encoded[14] = { 0 };
+	static unsigned char encoded[14] = { 0 };
 	unsigned char bPos=0;
 
 	for (char i=0; i < 9;i++) {
@@ -34,7 +34,7 @@ unsigned char* encode (struct ship arr[]) {
 struct ship* decode(unsigned char arr[]) {
 	//printf("%X", arr);
 	//printf("%X", arr[1]);
-	struct ship decode[9] = { 0 };
+	static struct ship decode[9] = { 0 };
 	unsigned char bPos = 0;
 
 	for (char i = 0; i < 9;i++) {
@@ -51,7 +51,7 @@ struct ship* decode(unsigned char arr[]) {
 
 	}
 	//printf("%x", *arr);
-	printf("%x", decode[0].dir);
+	printf("%x", decode[3].posX);
 	return decode;
 }
 
@@ -96,15 +96,17 @@ int main(int argc, char* argv[]) {
 	navy[8].dir = 1;
 
 	//decode(encode(navy));
-	unsigned char cNavy[14] = {0x11, 0x9a, 0x01,0x11, 0x92, 0x01, 0x02,0x11, 0x92, 0x01,0x11, 0x92, 0x01, 0x02 };
+	decode(encode(navy));
+
 	//printf("%x", *(cNavy+3));
 	//printf("%X",cNavy);
 	//printf("%X", *cNavy);
 	//printf("\n");
-	decode(cNavy);
+
 	//char test[3] = { 'B',69,'a' };
 
 	//printf("%d",sizeof(bool));
 
 	//printf("%02x", *(test+1));
+
 }
