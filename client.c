@@ -69,21 +69,6 @@ void parse_config(const char *filename, Config *config) {
     fclose(file);
 }
 
-// Metodos
-
-
-void get_public_ip(char *ip, size_t size) {
-    FILE *fp = popen("curl -s https://api64.ipify.org", "r");
-    if (fp == NULL) {
-        perror("Error al ejecutar curl");
-        return;
-    }
-
-    fgets(ip, size, fp); // Leer la IP pública en la variable
-    pclose(fp);
-}
-
-
 
 #ifdef _WIN32
 
