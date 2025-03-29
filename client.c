@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
 #ifdef _WIN32
     //Librerias sockets para windows
     #include <winsock2.h> 
@@ -26,6 +24,22 @@
 #define PORTLINUX 8080
 
 #define BUFFER_SIZE 1024
+
+
+// Metodos
+
+
+void get_public_ip(char *ip, size_t size) {
+    FILE *fp = popen("curl -s https://api64.ipify.org", "r");
+    if (fp == NULL) {
+        perror("Error al ejecutar curl");
+        return;
+    }
+
+    fgets(ip, size, fp); // Leer la IP pública en la variable
+    pclose(fp);
+}
+
 
 
 #ifdef _WIN32
@@ -163,6 +177,10 @@
         struct sockaddr_in serv_addr;
         char message[1024];
         char buffer[1024] = { 0 };
+
+        char public_ip[50];
+        get_public_ip(public_ip, sizeof(public_ip));
+        public_ip[strcspn(public_ip, "\n")] = 0;
 
         
         if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
