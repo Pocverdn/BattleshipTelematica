@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
 #ifdef _WIN32
     //Librerias sockets para windows
     #include <winsock2.h> 
@@ -18,14 +16,73 @@
     #include <string.h>
     #include <sys/socket.h>
     #include <unistd.h>
-    
+    #include <libconfig.h>
 #endif
 
 // Puerto
-#define PORT "8080"
-#define PORTLINUX 8080
-
 #define BUFFER_SIZE 1024
+
+// Parser de archivo
+typedef struct {
+    char server_ip[MAX_LINE];
+    int port;
+} Config;
+
+void trim(char *str) {
+    char *end;
+    while (*str == ' ') str++;  // Trim leading spaces
+    end = str + strlen(str) - 1;
+    while (end > str && (*end == ' ' || *end == '\n' || *end == '\r')) end--;  // Trim trailing spaces
+    *(end + 1) = '\0';
+}
+void trim(char *str) {
+    char *end;
+    while (*str == ' ') str++;  // Trim leading spaces
+    end = str + strlen(str) - 1;
+    while (end > str && (*end == ' ' || *end == '\n' || *end == '\r')) end--;  // Trim trailing spaces
+    *(end + 1) = '\0';
+}
+
+void parse_config(const char *filename, Config *config) {
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        perror("Error opening config file");
+        exit(1);
+    }
+
+    char line[MAX_LINE];
+    while (fgets(line, sizeof(line), file)) {
+        char key[MAX_LINE], value[MAX_LINE];
+
+        if (line[0] == '#' || line[0] == '\n') continue;  // Skip comments and empty lines
+
+        if (sscanf(line, "%[^=]=%s", key, value) == 2) {
+            trim(value);
+
+            if (strcmp(key, "serverip") == 0) {
+                strcpy(config->server_ip, value);
+            } else if (strcmp(key, "port") == 0) {
+                config->port = atoi(value);
+            }
+        }
+    }
+    fclose(file);
+}
+
+// Metodos
+
+
+void get_public_ip(char *ip, size_t size) {
+    FILE *fp = popen("curl -s https://api64.ipify.org", "r");
+    if (fp == NULL) {
+        perror("Error al ejecutar curl");
+        return;
+    }
+
+    fgets(ip, size, fp); // Leer la IP pública en la variable
+    pclose(fp);
+}
+
 
 
 #ifdef _WIN32
@@ -33,7 +90,7 @@
     //Tutorial used:https://learn.microsoft.com/en-us/windows/win32/winsock/creating-a-socket-for-the-client
 
     int main(int argc, char *argv[]){
-    
+        
         int recvbuflen = BUFFER_SIZE;
 
         const char *sendbuf = "this is a test";
@@ -49,6 +106,11 @@
                 return 1;
             }
         #endif
+
+
+        
+        
+
 
         // Declaro addrinfo para resolver direcciones de dominio o ip
 
@@ -148,12 +210,11 @@
             close(ConnectSocket);
         #endif
 
-        return 0;ZeroMemory
+        return 0;
 
 
 
     }
-
 #else
 
     int main(int argc, char const* argv[])
@@ -161,10 +222,24 @@
 
         int status, valread, client_fd;
         struct sockaddr_in serv_addr;
-        char message[1024];
+        char* hello = "Hello from client";
         char buffer[1024] = { 0 };
+<<<<<<< HEAD
+        //Extract config variables
+            char server_ip[256] = "";
+            int PORTLINUX = 0;
+            parse_config("config.txt", server_ip, &port);
+            printf("Server IP: %s\n", server_ip);
+            printf("Port: %d\n", port);
+        //
+=======
+
+        char public_ip[50];
+        get_public_ip(public_ip, sizeof(public_ip));
+        public_ip[strcspn(public_ip, "\n")] = 0;
 
         
+>>>>>>> 21b744646fefe8e9adcd7470466283d6ad767658
         if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
             printf("\n Socket creation error \n");
             return -1;
@@ -174,44 +249,24 @@
         serv_addr.sin_port = htons(PORTLINUX);
 
 
-        if (inet_pton(AF_INET, "44.202.111.89", &serv_addr.sin_addr)
+        if (inet_pton(AF_INET, "44.203.190.123", &serv_addr.sin_addr)
             <= 0) {
             printf(
                 "\nInvalid address/ Address not supported \n");
             return -1;
         }
 
-        if ((status = connect(client_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
-            printf("\nConnection Failed \n");
-            return -1;
+        if ((status
+            = connect(client_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
+        printf("\nConnection Failed \n");
+        return -1;
         }
 
-
-        // Bucle para enviar múltiples mensajes
-        while (1) {
-            printf("Ingrese el mensaje a enviar (o 'exit' para salir): ");
-            fgets(message, BUFFER_SIZE, stdin);
-            message[strcspn(message, "\n")] = 0;  // Eliminar el salto de línea
-    
-            // Si el usuario escribe "exit", cerrar el cliente
-            if (strcmp(message, "exit") == 0) {
-                printf("Cerrando conexión...\n");
-                break;
-            }
-    
-            // Enviar mensaje al servidor
-            send(client_fd, message, strlen(message), 0);
-            printf("Mensaje enviado: %s\n", message);
-    
-            // Leer respuesta del servidor
-            valread = read(client_fd, buffer, BUFFER_SIZE - 1);
-            if (valread > 0) {
-                buffer[valread] = '\0';
-                //printf("Servidor: %s\n", buffer);
-            }
-    
-            memset(buffer, 0, BUFFER_SIZE);  // Limpiar el buffer
-        }
+        send(client_fd, hello, strlen(hello), 0);
+        printf("Hello message sent\n");
+        
+        valread = read(client_fd, buffer, 1024 - 1); 
+        printf("%s\n", buffer);
 
         close(client_fd);
         return 0;
