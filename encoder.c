@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
 	a.posX = 7;
 	a.posY = 6;
 	printf("%X", decodeAttack(encodeAttack(a)).posY);
-	free(navy)
+	free(navy);
 	//printf("%x", *(cNavy+3));
 	//printf("%X",cNavy);
 	//printf("%X", *cNavy);
