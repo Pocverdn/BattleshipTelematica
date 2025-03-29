@@ -24,7 +24,7 @@
 
 // Parser de archivo
 typedef struct {
-    char server_ip[MAX_LINE];
+    char server_ip[256];
     int port;
 } Config;
 
@@ -50,9 +50,9 @@ void parse_config(const char *filename, Config *config) {
         exit(1);
     }
 
-    char line[MAX_LINE];
+    char line[256];
     while (fgets(line, sizeof(line), file)) {
-        char key[MAX_LINE], value[MAX_LINE];
+        char key[256], value[256];
 
         if (line[0] == '#' || line[0] == '\n') continue;  // Skip comments and empty lines
 
@@ -224,7 +224,6 @@ void get_public_ip(char *ip, size_t size) {
         struct sockaddr_in serv_addr;
         char* hello = "Hello from client";
         char buffer[1024] = { 0 };
-<<<<<<< HEAD
         //Extract config variables
             char server_ip[256] = "";
             int PORTLINUX = 0;
@@ -232,14 +231,6 @@ void get_public_ip(char *ip, size_t size) {
             printf("Server IP: %s\n", server_ip);
             printf("Port: %d\n", port);
         //
-=======
-
-        char public_ip[50];
-        get_public_ip(public_ip, sizeof(public_ip));
-        public_ip[strcspn(public_ip, "\n")] = 0;
-
-        
->>>>>>> 21b744646fefe8e9adcd7470466283d6ad767658
         if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
             printf("\n Socket creation error \n");
             return -1;
