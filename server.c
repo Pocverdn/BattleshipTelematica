@@ -48,12 +48,20 @@
         char buffer[BUFFER_SIZE] = {0};
         const char *hello = "Hello from server";
 
-
-        recv(new_socket, buffer, BUFFER_SIZE, 0);
-        printf("Message from client: %s\n", buffer);
-
-        send(new_socket, hello, strlen(hello), 0);
-        printf("Hello message sent\n");
+        while (1) {
+            memset(buffer, 0, BUFFER_SIZE);
+            int bytes_received = recv(new_socket, buffer, BUFFER_SIZE, 0);
+    
+            if (bytes_received <= 0) {
+                printf("Cliente desconectado\n");
+                break;
+            }
+    
+            printf("Mensaje del cliente: %s\n", buffer);
+    
+            send(new_socket, hello, strlen(hello), 0);
+            //printf("Mensaje enviado al cliente\n");
+        }
 
 
         #ifdef _WIN32

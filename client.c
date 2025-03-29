@@ -33,10 +33,7 @@
     //Tutorial used:https://learn.microsoft.com/en-us/windows/win32/winsock/creating-a-socket-for-the-client
 
     int main(int argc, char *argv[]){
-
-        
-        
-        
+    
         int recvbuflen = BUFFER_SIZE;
 
         const char *sendbuf = "this is a test";
@@ -52,11 +49,6 @@
                 return 1;
             }
         #endif
-
-
-        
-        
-
 
         // Declaro addrinfo para resolver direcciones de dominio o ip
 
@@ -156,7 +148,7 @@
             close(ConnectSocket);
         #endif
 
-        return 0;
+        return 0;ZeroMemory
 
 
 
@@ -169,9 +161,10 @@
 
         int status, valread, client_fd;
         struct sockaddr_in serv_addr;
-        char* hello = "Hello from client";
+        char message[1024];
         char buffer[1024] = { 0 };
 
+        
         if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
             printf("\n Socket creation error \n");
             return -1;
@@ -181,24 +174,44 @@
         serv_addr.sin_port = htons(PORTLINUX);
 
 
-        if (inet_pton(AF_INET, "44.203.190.123", &serv_addr.sin_addr)
+        if (inet_pton(AF_INET, "44.202.111.89", &serv_addr.sin_addr)
             <= 0) {
             printf(
                 "\nInvalid address/ Address not supported \n");
             return -1;
         }
 
-        if ((status
-            = connect(client_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
-        printf("\nConnection Failed \n");
-        return -1;
+        if ((status = connect(client_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
+            printf("\nConnection Failed \n");
+            return -1;
         }
 
-        send(client_fd, hello, strlen(hello), 0);
-        printf("Hello message sent\n");
-        
-        valread = read(client_fd, buffer, 1024 - 1); 
-        printf("%s\n", buffer);
+
+        // Bucle para enviar múltiples mensajes
+        while (1) {
+            printf("Ingrese el mensaje a enviar (o 'exit' para salir): ");
+            fgets(message, BUFFER_SIZE, stdin);
+            message[strcspn(message, "\n")] = 0;  // Eliminar el salto de línea
+    
+            // Si el usuario escribe "exit", cerrar el cliente
+            if (strcmp(message, "exit") == 0) {
+                printf("Cerrando conexión...\n");
+                break;
+            }
+    
+            // Enviar mensaje al servidor
+            send(client_fd, message, strlen(message), 0);
+            printf("Mensaje enviado: %s\n", message);
+    
+            // Leer respuesta del servidor
+            valread = read(client_fd, buffer, BUFFER_SIZE - 1);
+            if (valread > 0) {
+                buffer[valread] = '\0';
+                //printf("Servidor: %s\n", buffer);
+            }
+    
+            memset(buffer, 0, BUFFER_SIZE);  // Limpiar el buffer
+        }
 
         close(client_fd);
         return 0;
