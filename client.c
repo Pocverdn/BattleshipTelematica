@@ -197,13 +197,15 @@ void parse_config(const char *filename, char *server_ip, int *port) {
         struct sockaddr_in serv_addr;
         char* hello = "Hello from client";
         char buffer[1024] = { 0 };
+
         //Extract config variables
-            char server_ip[256] = "";
-            int PORTLINUX = 0;
-            parse_config("adress.config", server_ip, &PORTLINUX);
-            printf("Server IP: %s\n", server_ip);
-            printf("Port: %d\n", PORTLINUX);
+        char server_ip[256] = "";
+        int PORTLINUX = 0;
+        parse_config("adress.config", server_ip, &PORTLINUX);
+        printf("Server IP: %s\n", server_ip);
+        printf("Port: %d\n", PORTLINUX);
         //
+
         if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
             printf("\n Socket creation error \n");
             return -1;
@@ -213,44 +215,41 @@ void parse_config(const char *filename, char *server_ip, int *port) {
         serv_addr.sin_port = htons(PORTLINUX);
 
 
-        if (inet_pton(AF_INET, server_ip, &serv_addr.sin_addr)
-            <= 0) {
+        if (inet_pton(AF_INET, server_ip, &serv_addr.sin_addr) <= 0) {
             printf(
                 "\nInvalid address/ Address not supported \n");
             return -1;
         }
 
-        if ((status
-            = connect(client_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
-        printf("\nConnection Failed \n");
-        return -1;
+        if ((status = connect(client_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
+            printf("\nConnection Failed \n");
+            return -1;
         }
 
         printf("Connected to server! Type 'exit' to close connection.\n");
 
-    while (1) {
-        char msg[BUFFER_SIZE];
-        printf("Enter message: ");
-        fgets(msg, BUFFER_SIZE, stdin);
+        while (1) {
+            char msg[BUFFER_SIZE];
+            printf("Enter message: ");
+            fgets(msg, BUFFER_SIZE, stdin);
 
-        // Eliminar el salto de línea de fgets
-        msg[strcspn(msg, "\n")] = 0;
+            
+            msg[strcspn(msg, "\n")] = 0;
 
-        if (strcmp(msg, "exit") == 0) {
-            printf("Closing connection...\n");
-            break;
+            if (strcmp(msg, "exit") == 0) {
+                printf("Closing connection...\n");
+                break;
+            }
+
+            send(client_fd, msg, strlen(msg), 0);
+            printf("Message sent: %s\n", msg);
+
+            valread = read(client_fd, buffer, BUFFER_SIZE - 1);
+            if (valread > 0) {
+                buffer[valread] = '\0';
+                printf("Server: %s\n", buffer);
+            }
         }
-
-        send(client_fd, msg, strlen(msg), 0);
-        printf("Message sent: %s\n", msg);
-
-        // Recibir respuesta del servidor
-        valread = read(client_fd, buffer, BUFFER_SIZE - 1);
-        if (valread > 0) {
-            buffer[valread] = '\0';
-            printf("Server: %s\n", buffer);
-        }
-    }
 
         close(client_fd);
         return 0;
