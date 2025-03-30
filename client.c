@@ -85,11 +85,6 @@ void parse_config(const char *filename, char *server_ip, int *port) {
             }
         #endif
 
-
-        
-        
-
-
         // Declaro addrinfo para resolver direcciones de dominio o ip
 
         struct addrinfo *result = NULL,
@@ -218,7 +213,7 @@ void parse_config(const char *filename, char *server_ip, int *port) {
         serv_addr.sin_port = htons(PORTLINUX);
 
 
-        if (inet_pton(AF_INET, "44.203.190.123", &serv_addr.sin_addr)
+        if (inet_pton(AF_INET, server_ip, &serv_addr.sin_addr)
             <= 0) {
             printf(
                 "\nInvalid address/ Address not supported \n");
@@ -231,11 +226,31 @@ void parse_config(const char *filename, char *server_ip, int *port) {
         return -1;
         }
 
-        send(client_fd, hello, strlen(hello), 0);
-        printf("Hello message sent\n");
-        
-        valread = read(client_fd, buffer, 1024 - 1); 
-        printf("%s\n", buffer);
+        printf("Connected to server! Type 'exit' to close connection.\n");
+
+    while (1) {
+        char msg[BUFFER_SIZE];
+        printf("Enter message: ");
+        fgets(msg, BUFFER_SIZE, stdin);
+
+        // Eliminar el salto de línea de fgets
+        msg[strcspn(msg, "\n")] = 0;
+
+        if (strcmp(msg, "exit") == 0) {
+            printf("Closing connection...\n");
+            break;
+        }
+
+        send(client_fd, msg, strlen(msg), 0);
+        printf("Message sent: %s\n", msg);
+
+        // Recibir respuesta del servidor
+        valread = read(client_fd, buffer, BUFFER_SIZE - 1);
+        if (valread > 0) {
+            buffer[valread] = '\0';
+            printf("Server: %s\n", buffer);
+        }
+    }
 
         close(client_fd);
         return 0;
