@@ -205,7 +205,7 @@ void parse_config(const char *filename, Config *config) {
         //Extract config variables
             char server_ip[256] = "";
             int PORTLINUX = 0;
-            parse_config("config.txt", server_ip, &port);
+            parse_config("adress.config", server_ip, &port);
             printf("Server IP: %s\n", server_ip);
             printf("Port: %d\n", port);
         //
