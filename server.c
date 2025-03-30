@@ -48,7 +48,7 @@ void *handle_client(void *client_socket) {
     return NULL;
 }
 
-inline int setup_server(Server *server, char* IP, char* port) {
+int setup_server(Server *server, char* IP, char* port) {
     server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server->server_fd == -1) {
         perror("Socket creation failed");
@@ -79,7 +79,7 @@ inline int setup_server(Server *server, char* IP, char* port) {
     return 0;
 }
 
-inline void accept_clients(Server *server) {
+void accept_clients(Server *server) {
     int addrlen = sizeof(server->address);
     pthread_t thread_id;
 
