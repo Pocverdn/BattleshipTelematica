@@ -35,13 +35,6 @@ void trim(char *str) {
     while (end > str && (*end == ' ' || *end == '\n' || *end == '\r')) end--;  // Trim trailing spaces
     *(end + 1) = '\0';
 }
-void trim(char *str) {
-    char *end;
-    while (*str == ' ') str++;  // Trim leading spaces
-    end = str + strlen(str) - 1;
-    while (end > str && (*end == ' ' || *end == '\n' || *end == '\r')) end--;  // Trim trailing spaces
-    *(end + 1) = '\0';
-}
 
 void parse_config(const char *filename, Config *config) {
     FILE *file = fopen(filename, "r");
