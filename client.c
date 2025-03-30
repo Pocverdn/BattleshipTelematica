@@ -25,7 +25,7 @@
 // Parser de archivo
 typedef struct {
     char server_ip[256];
-    int port;
+    int PORTLINUX;
 } Config;
 
 void trim(char *str) {
@@ -36,7 +36,7 @@ void trim(char *str) {
     *(end + 1) = '\0';
 }
 
-void parse_config(const char *filename, Config *config) {
+void parse_config(const char *filename, char *server_ip, int *port) {
     FILE *file = fopen(filename, "r");
     if (!file) {
         perror("Error opening config file");
@@ -53,9 +53,9 @@ void parse_config(const char *filename, Config *config) {
             trim(value);
 
             if (strcmp(key, "serverip") == 0) {
-                strcpy(config->server_ip, value);
+                strcpy(server_ip, value);  // Store IP as a string
             } else if (strcmp(key, "port") == 0) {
-                config->port = atoi(value);
+                *port = atoi(value);
             }
         }
     }
@@ -205,9 +205,9 @@ void parse_config(const char *filename, Config *config) {
         //Extract config variables
             char server_ip[256] = "";
             int PORTLINUX = 0;
-            parse_config("adress.config", server_ip, &port);
+            parse_config("adress.config", server_ip, &PORTLINUX);
             printf("Server IP: %s\n", server_ip);
-            printf("Port: %d\n", port);
+            printf("Port: %d\n", PORTLINUX);
         //
         if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
             printf("\n Socket creation error \n");
