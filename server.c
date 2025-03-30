@@ -11,7 +11,7 @@
 //#define PORT 8080
 
 //14 bytes para envio de posiciones de barcos - 1 byte para comfirmación de disparo
-#define BUFFER_SIZE 14
+#define BUFFER_SIZE 1024
 #define BUFFER_SIZE_Confirm 1
 
 typedef struct sockaddr_in sockaddr_in;
@@ -25,8 +25,10 @@ typedef struct {
 
 void *handle_client(void *client_socket) {
     int new_socket = *(int *)client_socket;
+    free(client_socket);
+
     char buffer[BUFFER_SIZE] = {0};
-    const char *hello = "Hello from server";
+    const char *hello = "Message received";
 
     while (1) {
         memset(buffer, 0, BUFFER_SIZE);
@@ -37,7 +39,7 @@ void *handle_client(void *client_socket) {
             break;
         }
 
-        printf("Mensaje del cliente: %s\n", buffer);
+        printf("%s\n", buffer);
 
         send(new_socket, hello, strlen(hello), 0);
         //printf("Mensaje enviado al cliente\n");
@@ -84,16 +86,26 @@ void accept_clients(Server *server) {
     pthread_t thread_id;
 
     while (1) {
-        int new_socket = accept(server->server_fd, (sockaddr *)&server->address, (socklen_t *)&addrlen);
-        if (new_socket < 0) {
+        int *new_socket = malloc(sizeof(int));
+        if (!new_socket) {
+            perror("Memory allocation failed");
+            continue;
+        }
+
+        *new_socket = accept(server->server_fd, (sockaddr *)&server->address, (socklen_t *)&addrlen);
+        if (*new_socket < 0) {
             perror("Accept failed");
+            free(new_socket);
             continue;
         }
-        if (pthread_create(&thread_id, NULL, handle_client, (void *)&new_socket) != 0) {
+
+        if (pthread_create(&thread_id, NULL, handle_client, (void *)new_socket) != 0) {
             perror("Thread creation failed");
-            close(new_socket);
+            close(*new_socket);
+            free(new_socket);
             continue;
         }
+
         pthread_detach(thread_id);
     }
 }

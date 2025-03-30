@@ -20,7 +20,7 @@
 #endif
 
 // Puerto
-#define BUFFER_SIZE 2500
+#define BUFFER_SIZE 2048  
 
 // Parser de archivo
 typedef struct {
@@ -193,11 +193,17 @@ void parse_config(const char *filename, char *server_ip, int *port) {
 
     void chat_with_server(int client_fd) {
         char buffer[BUFFER_SIZE] = {0};
+        char username[50];
+
+        printf("Enter your username: ");
+        fgets(username, sizeof(username), stdin);
+        username[strcspn(username, "\n")] = 0;
     
-        printf("Connected to server! Type 'exit' to close connection.\n");
+        printf("Connected to server as %s! Type 'exit' to close connection.\n", username);
+
         while (1) {
             char msg[BUFFER_SIZE];
-            printf("Enter message: ");
+            printf("[%s] Enter message: ", username);
             fgets(msg, BUFFER_SIZE, stdin);
             
             msg[strcspn(msg, "\n")] = 0;
@@ -205,14 +211,22 @@ void parse_config(const char *filename, char *server_ip, int *port) {
                 printf("Closing connection...\n");
                 break;
             }
+
+            if (strlen(username) + strlen(msg) + 3 > BUFFER_SIZE) {
+                fprintf(stderr, "Error: Mensaje demasiado largo\n");
+                continue;
+            }
+
+            char formatted_msg[BUFFER_SIZE];
+            snprintf(formatted_msg, BUFFER_SIZE, "%.*s: %.*s", 50, username, BUFFER_SIZE - 50 - 3, msg);
             
-            send(client_fd, msg, strlen(msg), 0);
-            printf("Message sent: %s\n", msg);
+            send(client_fd, formatted_msg, strlen(formatted_msg), 0);
+            //printf("Message sent\n");
     
             int valread = read(client_fd, buffer, BUFFER_SIZE - 1);
             if (valread > 0) {
                 buffer[valread] = '\0';
-                //printf("Server: %s\n", buffer);
+                //printf("Server response: %s\n", buffer);
             }
         }
     }
