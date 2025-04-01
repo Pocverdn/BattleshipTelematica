@@ -47,7 +47,7 @@ struct attack {
 
 
 
-inline struct ship* decode(unsigned char arr[]) {
+extern inline struct ship* decode(unsigned char arr[]) {
     //printf("%X", arr);
     //printf("%X", arr[1]);
     static struct ship decode[9] = { 0 };
@@ -73,7 +73,7 @@ inline struct ship* decode(unsigned char arr[]) {
     return decode;
 }
 
-inline void gameStart(struct ship ships[], bool player, session* ses) {
+extern inline void gameStart(struct ship ships[], bool player, session* ses) {
     if (player) { //player es si es jugador uno o no
         for (char i = 0; i < 9; i++) {
             for (char j = 0; j < ships[i].size; j++) {
@@ -97,8 +97,6 @@ void *handle_client(void *client_socket) {
     char buffer[BUFFER_SIZE] = {0};
     const char *hello = "Message received";
 
-
-
         //Inicio del juego, fuera del buffer
         //Necesito que cuando hagan la conexion me pogan un bool con el numero del jugador y que ambos threads de un juego compartan un puntero a la misma session en el servidor 
         //Mientraas para pruebas
@@ -115,7 +113,7 @@ void *handle_client(void *client_socket) {
             
         }
         else {
-            struct ship ships[9] = decode(buffer);
+            struct ship *ships = decode(buffer);
             gameStart(ships, TESTplayer,&TESTs);
         }
 
@@ -139,7 +137,7 @@ void *handle_client(void *client_socket) {
     return NULL;
 }
 
-inline int setup_server(Server *server, char* IP, char* port) {
+extern inline int setup_server(Server *server, char* IP, char* port) {
     server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server->server_fd == -1) {
         perror("Socket creation failed");
@@ -170,7 +168,7 @@ inline int setup_server(Server *server, char* IP, char* port) {
     return 0;
 }
 
-inline void accept_clients(Server *server) {
+extern inline void accept_clients(Server *server) {
     int addrlen = sizeof(server->address);
     pthread_t thread_id;
 

@@ -50,7 +50,7 @@ typedef struct {
 } map;
 
 
-inline unsigned char* encode(struct ship arr[]) { //Podemos a�adir una variable "K" para que la cantidad de barcos sea dynamica.
+extern inline unsigned char* encode(struct ship arr[]) { //Podemos a�adir una variable "K" para que la cantidad de barcos sea dynamica.
     static unsigned char encoded[14] = { 0 }; //Con variable dynamica el tama�o de este char seria (Roof)K*3/2. cada barco es de 12 bits, y lo que mandamos esta en bytes, lo mismo aplica para las otras funciones.
     unsigned char bPos = 0;
 
@@ -71,31 +71,35 @@ inline unsigned char* encode(struct ship arr[]) { //Podemos a�adir una variabl
     return encoded;
 }
 
-inline struct ship* inputShips() {
+extern inline struct ship* inputShips() {
     static struct ship ship[9] = { 0 };
    
     for (char i = 0; i < 9; i++) {
         printf("coordenadas, tamaño y luego dirección (1 o 0) del barco.");
-        scanf("%d", &ship[i].posX);
-        scanf("%d", &ship[i].posY);
-        scanf("%d", &ship[i].size);
-        scanf("%d", &ship[i].dir);
+        scanf("%hhu", &ship[i].posX); 
+        scanf("%hhu", &ship[i].posY);
+        scanf("%hhu", &ship[i].size);
+        
+
+        int temp_dir;
+        scanf("%d", &temp_dir);
+        ship[i].dir = (temp_dir != 0);
     }
 }
 
 
-inline map* gameStart(struct ship ships[]) {
-    map mapa[10][10];
+extern inline map* gameStart(struct ship ships[]) {
+    static map mapa[10][10];
         for (char i = 0; i < 9; i++) {
             for (char j = 0; j < ships[i].size; j++) {
                 mapa[ships[i].posX + (j * ships[i].dir)][ships[i].posY + (j * ships[i].dir)].ship = 1;
             }
         }
-        return mapa;
+        return &mapa[0][0];
     
 }
 
-inline void trim(char *str) {
+extern inline void trim(char *str) {
     char *end;
     while (*str == ' ') str++;  // Trim leading spaces
     end = str + strlen(str) - 1;
@@ -103,7 +107,7 @@ inline void trim(char *str) {
     *(end + 1) = '\0';
 }
 
-inline void parse_config(const char *filename, char *server_ip, int *port) {
+extern inline void parse_config(const char *filename, char *server_ip, int *port) {
     FILE *file = fopen(filename, "r");
     if (!file) {
         perror("Error opening config file");
@@ -239,7 +243,7 @@ inline void parse_config(const char *filename, char *server_ip, int *port) {
 #else
     
 
-    inline int connect_to_server(const Config *config) {
+    extern inline int connect_to_server(const Config *config) {
         int client_fd;
         struct sockaddr_in serv_addr;
 
@@ -265,7 +269,7 @@ inline void parse_config(const char *filename, char *server_ip, int *port) {
     }
 
 
-    inline void chat_with_server(int client_fd) {
+    extern inline void chat_with_server(int client_fd) {
         char buffer[BUFFER_SIZE] = {0};
         char username[50];
 
@@ -292,7 +296,7 @@ inline void parse_config(const char *filename, char *server_ip, int *port) {
             }
 
             char formatted_msg[BUFFER_SIZE];
-            snprintf(formatted_msg, BUFFER_SIZE, "%.*s: %.*s", 50, username, BUFFER_SIZE - 50 - 3, msg);
+            snprintf(formatted_msg, BUFFER_SIZE, "%.*s: %.*s", (BUFFER_SIZE - 3) / 2, username, (BUFFER_SIZE - 3) / 2, msg);
             
             send(client_fd, formatted_msg, strlen(formatted_msg), 0);
             //printf("Message sent\n");
