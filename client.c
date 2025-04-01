@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -50,7 +50,40 @@ typedef struct {
 } map;
 
 
-void trim(char *str) {
+inline unsigned char* encode(struct ship arr[]) { //Podemos a�adir una variable "K" para que la cantidad de barcos sea dynamica.
+    static unsigned char encoded[14] = { 0 }; //Con variable dynamica el tama�o de este char seria (Roof)K*3/2. cada barco es de 12 bits, y lo que mandamos esta en bytes, lo mismo aplica para las otras funciones.
+    unsigned char bPos = 0;
+
+    for (char i = 0; i < 9; i++) {
+        encoded[bPos / 8] = encoded[bPos / 8] | (arr[i].posX << bPos % 8);
+        bPos = bPos + 4;
+        encoded[bPos / 8] = encoded[bPos / 8] | (arr[i].posY << bPos % 8);
+        bPos = bPos + 4;
+        encoded[bPos / 8] = encoded[bPos / 8] | (arr[i].size << bPos % 8);
+        bPos = bPos + 3;
+        encoded[bPos / 8] = encoded[bPos / 8] | (arr[i].dir << bPos % 8);
+        bPos = bPos + 1;
+
+    }
+    printf("El primer byte de la cadena codificada: ");
+    printf("%x", encoded[0]);
+    printf("\n");
+    return encoded;
+}
+
+inline struct ship* inputShips() {
+    static struct ship ship[9] = { 0 };
+   
+    for (char i = 0; i < 9; i++) {
+        printf("coordenadas, tamaño y luego dirección (1 o 0) del barco.");
+        scanf("%d", &ship[i].posX);
+        scanf("%d", &ship[i].posY);
+        scanf("%d", &ship[i].size);
+        scanf("%d", &ship[i].dir);
+    }
+}
+
+inline void trim(char *str) {
     char *end;
     while (*str == ' ') str++;  // Trim leading spaces
     end = str + strlen(str) - 1;
@@ -58,7 +91,7 @@ void trim(char *str) {
     *(end + 1) = '\0';
 }
 
-void parse_config(const char *filename, char *server_ip, int *port) {
+inline void parse_config(const char *filename, char *server_ip, int *port) {
     FILE *file = fopen(filename, "r");
     if (!file) {
         perror("Error opening config file");
