@@ -45,29 +45,9 @@ struct attack {
 };
 
 
+
+
 inline struct ship* decode(unsigned char arr[]) {
-    //printf("%X", arr);
-    //printf("%X", arr[1]);
-    static struct ship decode[9] = { 0 };
-    unsigned char bPos = 0;
-
-    for (char i = 0; i < 9; i++) {
-
-        decode[i].posX = (arr[bPos / 8] & (0xF << bPos % 8)) >> bPos % 8;
-        bPos = bPos + 4;
-        decode[i].posY = (arr[bPos / 8] & (0xF << bPos % 8)) >> bPos % 8;
-        bPos = bPos + 4;
-        decode[i].size = (arr[bPos / 8] & (0x7 << bPos % 8)) >> bPos % 8;
-        bPos = bPos + 3;
-        decode[i].dir = (arr[bPos / 8] & (0x1 << bPos % 8)) >> bPos % 8;
-        bPos = bPos + 1;
-
-
-    }
-    return decode;
-}
-
-struct ship* decode(unsigned char arr[]) {
     //printf("%X", arr);
     //printf("%X", arr[1]);
     static struct ship decode[9] = { 0 };

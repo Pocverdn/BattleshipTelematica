@@ -83,6 +83,18 @@ inline struct ship* inputShips() {
     }
 }
 
+
+inline map* gameStart(struct ship ships[]) {
+    map mapa[10][10];
+        for (char i = 0; i < 9; i++) {
+            for (char j = 0; j < ships[i].size; j++) {
+                mapa[ships[i].posX + (j * ships[i].dir)][ships[i].posY + (j * ships[i].dir)].ship = 1;
+            }
+        }
+        return mapa;
+    
+}
+
 inline void trim(char *str) {
     char *end;
     while (*str == ' ') str++;  // Trim leading spaces
@@ -119,7 +131,7 @@ inline void parse_config(const char *filename, char *server_ip, int *port) {
 
 #ifdef _WIN32
 
-    SOCKET connect_to_server(const Config *config) {
+    inline SOCKET connect_to_server(const Config *config) {
         WSADATA wsaData;
         struct addrinfo *result = NULL, *ptr = NULL, hints;
         SOCKET ConnectSocket = INVALID_SOCKET;
@@ -175,12 +187,19 @@ inline void parse_config(const char *filename, char *server_ip, int *port) {
 
 
     void chat_with_server(SOCKET ConnectSocket) {
-        char sendbuf[1024];
-        char recvbuf[1024];
-        int recvbuflen = 1024;
+        char sendbuf[14];
+        char recvbuf[14];
+        int recvbuflen = 14;
         int iResult;
     
         printf("Connected to server! Type 'exit' to close connection.\n");
+
+        //game start
+        struct ship ships[9] = inputShips();
+        map mapa[10][10] = gameStart(ships);
+        char sendbuf[14] = encode(ships);
+
+
     
         while (1) {
             printf("Enter message: ");
@@ -220,7 +239,7 @@ inline void parse_config(const char *filename, char *server_ip, int *port) {
 #else
     
 
-    int connect_to_server(const Config *config) {
+    inline int connect_to_server(const Config *config) {
         int client_fd;
         struct sockaddr_in serv_addr;
 
@@ -246,7 +265,7 @@ inline void parse_config(const char *filename, char *server_ip, int *port) {
     }
 
 
-    void chat_with_server(int client_fd) {
+    inline void chat_with_server(int client_fd) {
         char buffer[BUFFER_SIZE] = {0};
         char username[50];
 
