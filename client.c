@@ -247,6 +247,8 @@ extern inline void parse_config(const char *filename, char *server_ip, int *port
         int client_fd;
         struct sockaddr_in serv_addr;
 
+
+
         if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
             perror("Socket creation error");
             return -1;
@@ -273,11 +275,19 @@ extern inline void parse_config(const char *filename, char *server_ip, int *port
         char buffer[BUFFER_SIZE] = {0};
         char username[50];
 
+
+
         printf("Enter your username: ");
         fgets(username, sizeof(username), stdin);
         username[strcspn(username, "\n")] = 0;
     
         printf("Connected to server as %s! Type 'exit' to close connection.\n", username);
+
+        struct ship ships[9] = inputShips();
+        map mapa[10][10] = gameStart(ships);
+        char sendbuf[14] = encode(ships);
+
+        send(client_fd, sendbuf, 14, 0);
 
         while (1) {
             char msg[BUFFER_SIZE];
