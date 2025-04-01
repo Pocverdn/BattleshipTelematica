@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #ifdef _WIN32
     //Librerias sockets para windows
@@ -20,13 +21,34 @@
 #endif
 
 // Puerto
-#define BUFFER_SIZE 2048  
+#define BUFFER_SIZE 14 
+#define BUFFER_attack 1 
 
 // Parser de archivo
 typedef struct {
     char server_ip[256];
     int PORTLINUX;
 } Config;
+
+
+struct ship {
+    unsigned char  posX;//4 bits
+    unsigned char  posY;//4 bits
+    unsigned char  size;//3 bits
+    bool dir;
+};
+
+struct attack {
+    unsigned char  posX;//4 bits
+    unsigned char  posY;//4 bits
+};
+
+
+typedef struct {
+    bool ship;
+    bool attacked;
+} map;
+
 
 void trim(char *str) {
     char *end;
