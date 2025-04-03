@@ -3,14 +3,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-#ifdef _WIN32
-    //Librerias sockets para windows
-    #include <winsock2.h> 
-    #include <ws2tcpip.h>
-    #include <windows.h>
-    #pragma comment(lib, "ws2_32.lib")
-    #include <thread>
-#else
     //Librerias sockets para linux
     #include <arpa/inet.h>
     #include <stdio.h>
@@ -18,7 +10,7 @@
     #include <sys/socket.h>
     #include <unistd.h>
     #include <libconfig.h>
-#endif
+
 
 // Buffer
 #define BUFFER_SIZE 14 
@@ -130,115 +122,6 @@ extern inline void parse_config(const char *filename, char *server_ip, int *port
     }
     fclose(file);
 }
-
-#ifdef _WIN32
-
-    inline SOCKET connect_to_server(const Config *config) {
-        WSADATA wsaData;
-        struct addrinfo *result = NULL, *ptr = NULL, hints;
-        SOCKET ConnectSocket = INVALID_SOCKET;
-        int iResult;
-
-        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-            printf("WSAStartup failed\n");
-            return INVALID_SOCKET;
-        }
-
-        ZeroMemory(&hints, sizeof(hints));
-        hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_protocol = IPPROTO_TCP;
-
-        char port_str[10];
-        sprintf(port_str, "%d", config->PORTWINDOWS); // Convertir puerto a string
-
-        iResult = getaddrinfo(config->server_ip, port_str, &hints, &result);
-        if (iResult != 0) {
-            printf("getaddrinfo failed: %d\n", iResult);
-            WSACleanup();
-            return INVALID_SOCKET;
-        }
-
-        for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
-            ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
-            if (ConnectSocket == INVALID_SOCKET) {
-                printf("Error at socket(): %ld\n", WSAGetLastError());
-                freeaddrinfo(result);
-                WSACleanup();
-                return INVALID_SOCKET;
-            }
-
-            if (connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen) == SOCKET_ERROR) {
-                closesocket(ConnectSocket);
-                ConnectSocket = INVALID_SOCKET;
-                continue;
-            }
-            break;
-        }
-
-        freeaddrinfo(result);
-
-        if (ConnectSocket == INVALID_SOCKET) {
-            printf("Unable to connect to server!\n");
-            WSACleanup();
-            return INVALID_SOCKET;
-        }
-
-        return ConnectSocket;
-    }
-
-
-    void chat_with_server(SOCKET ConnectSocket) {
-        char sendbuf[14];
-        char recvbuf[14];
-        int recvbuflen = 14;
-        int iResult;
-    
-        printf("Connected to server! Type 'exit' to close connection.\n");
-
-        //game start
-        struct ship ships[9] = inputShips();
-        map mapa[10][10] = gameStart(ships);
-        char sendbuf[14] = encode(ships);
-
-
-    
-        while (1) {
-            printf("Enter message: ");
-            fgets(sendbuf, sizeof(sendbuf), stdin);
-            sendbuf[strcspn(sendbuf, "\n")] = 0;
-    
-            if (strcmp(sendbuf, "exit") == 0) {
-                printf("Closing connection...\n");
-                break;
-            }
-    
-            iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-            if (iResult == SOCKET_ERROR) {
-                printf("Send failed: %d\n", WSAGetLastError());
-                closesocket(ConnectSocket);
-                WSACleanup();
-                return;
-            }
-    
-            iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-            if (iResult > 0) {
-                recvbuf[iResult] = '\0';
-                printf("Server: %s\n", recvbuf);
-            } else if (iResult == 0) {
-                printf("Connection closed\n");
-                break;
-            } else {
-                printf("recv failed: %d\n", WSAGetLastError());
-                break;
-            }
-        }
-    
-        closesocket(ConnectSocket);
-        WSACleanup();
-    }
-
-#else
     
     extern inline int connect_to_server(const Config *config) {
         int client_fd;
@@ -318,27 +201,10 @@ extern inline void parse_config(const char *filename, char *server_ip, int *port
     }
     
 
-#endif
 
 
-//Tutorial used:https://learn.microsoft.com/en-us/windows/win32/winsock/creating-a-socket-for-the-client
-#ifdef _WIN32
 
-    int main() {
-        Config config;
-        parse_config("adress.config", config.server_ip, &config.PORTWINDOWS);
 
-        printf("Server IP: %s\n", config.server_ip);
-        printf("Port: %d\n", config.PORTWINDOWS);
-
-        SOCKET ConnectSocket = connect_to_server(&config);
-        if (ConnectSocket == INVALID_SOCKET) return 1;
-
-        chat_with_server(ConnectSocket);
-        return 0;
-    }
-    
-#else
 
 //Tutorial used:https://www.geeksforgeeks.org/socket-programming-cc/
 
@@ -357,4 +223,3 @@ extern inline void parse_config(const char *filename, char *server_ip, int *port
         return 0;
     }
 
-#endif
