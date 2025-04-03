@@ -44,9 +44,6 @@ struct attack {
     unsigned char  posY;//4 bits
 };
 
-
-
-
 extern inline struct ship* decode(unsigned char arr[]) {
     //printf("%X", arr);
     //printf("%X", arr[1]);
@@ -67,9 +64,9 @@ extern inline struct ship* decode(unsigned char arr[]) {
 
     }
     //printf("%x", *arr);
-    printf("El pos X del cuarto barco: ");
-    printf("%x", decode[3].posX);
-    printf("\n");
+    //printf("El pos X del cuarto barco: ");
+    //printf("%x", decode[3].posX);
+    //printf("\n");
     return decode;
 }
 
@@ -95,38 +92,45 @@ void *handle_client(void *client_socket) {
     free(client_socket);
 
     char buffer[BUFFER_SIZE] = {0};
+    char username[50] = {0};
+
     const char *hello = "Message received";
 
-        //Inicio del juego, fuera del buffer
-        //Necesito que cuando hagan la conexion me pogan un bool con el numero del jugador y que ambos threads de un juego compartan un puntero a la misma session en el servidor 
-        //Mientraas para pruebas
-        bool TESTplayer = 0;
-        session TESTs = {0, 0};
+    //int bytes_received = recv(new_socket, username, sizeof(username) - 1, 0);
 
-        //los valores de prueba terminan aca
+    //printf("Usuario conectado: %s\n", username);
 
+    //Inicio del juego, fuera del buffer
+    //Necesito que cuando hagan la conexion me pogan un bool con el numero del jugador y que ambos threads de un juego compartan un puntero a la misma session en el servidor 
+    //Mientraas para pruebas
+    bool TESTplayer = 0;
+    session TESTs = {0, 0};
+
+    //los valores de prueba terminan aca
+
+    memset(buffer, 0, BUFFER_SIZE);
+    int bytes_received = recv(new_socket, buffer, BUFFER_SIZE, 0);
+
+    if (bytes_received <= 0) {
+        printf("Cliente desconectado\n");
+        
+    }
+    else {
+        struct ship *ships = decode(buffer);
+        gameStart(ships, TESTplayer,&TESTs);
+    }
+
+
+    while (1) {
         memset(buffer, 0, BUFFER_SIZE);
-        int bytes_received = recv(new_socket, buffer, BUFFER_SIZE, 0);
+        bytes_received = recv(new_socket, buffer, BUFFER_SIZE - 1, 0);
 
         if (bytes_received <= 0) {
             printf("Cliente desconectado\n");
-            
-        }
-        else {
-            struct ship *ships = decode(buffer);
-            gameStart(ships, TESTplayer,&TESTs);
+            break;
         }
 
-        while (1) {
-            memset(buffer, 0, BUFFER_SIZE);
-            int bytes_received = recv(new_socket, buffer, BUFFER_SIZE, 0);
-
-            if (bytes_received <= 0) {
-                printf("Cliente desconectado\n");
-                break;
-            }
-
-        printf("%s\n", buffer);
+        printf("%s: %s\n", username, buffer);
 
         send(new_socket, hello, strlen(hello), 0);
         //printf("Mensaje enviado al cliente\n");
