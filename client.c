@@ -13,8 +13,8 @@
 
 
 // Buffer
-#define BUFFER_SIZE 2500 
-#define BUFFER_attack 1 
+#define BUFFER_SIZE 2500
+#define BUFFER_attack 1
 
 // Parser de archivo
 typedef struct {
