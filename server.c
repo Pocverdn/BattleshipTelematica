@@ -11,8 +11,11 @@
 //#define PORT 8080
 
 //14 bytes para envio de posiciones de barcos - 1 byte para comfirmación de disparo
-#define BUFFER_SIZE 14
+#define BUFFER_SIZE 2500
 #define BUFFER_SIZE_Confirm 1
+
+// Maximo de secciones
+#define MAX_SESSIONS 10
 
 typedef struct sockaddr_in sockaddr_in;
 typedef struct sockaddr sockaddr;
@@ -87,6 +90,12 @@ extern inline void gameStart(struct ship ships[], bool player, session* ses) {
     }
 }
 
+
+/*
+
+SAMUEL AQUI ESTA LA ANTERIOR FORMA DE MANEJAR LOS CLIENTES JUNTO A SUS PRUEBAS, ADAPTELO PARA LA NUEVA VERSIÓN
+
+
 void *handle_client(void *client_socket) {
     int new_socket = *(int *)client_socket;
     free(client_socket);
@@ -96,9 +105,9 @@ void *handle_client(void *client_socket) {
 
     const char *hello = "Message received";
 
-    //int bytes_received = recv(new_socket, username, sizeof(username) - 1, 0);
+    int bytes_received = recv(new_socket, username, sizeof(username) - 1, 0);
 
-    //printf("Usuario conectado: %s\n", username);
+    printf("Usuario conectado: %s\n", username);
 
     //Inicio del juego, fuera del buffer
     //Necesito que cuando hagan la conexion me pogan un bool con el numero del jugador y que ambos threads de un juego compartan un puntero a la misma session en el servidor 
@@ -120,6 +129,40 @@ void *handle_client(void *client_socket) {
         gameStart(ships, TESTplayer,&TESTs);
     }
 
+    while (1) {
+        memset(buffer, 0, BUFFER_SIZE);
+        bytes_received = recv(new_socket, buffer, BUFFER_SIZE - 1, 0);
+
+        if (bytes_received <= 0) {
+            printf("Cliente desconectado\n");
+            break;
+        }
+
+        printf("%s\n", buffer);
+
+        send(new_socket, hello, strlen(hello), 0);
+        //printf("Mensaje enviado al cliente\n");
+    }
+
+    close(new_socket); 
+
+    return NULL;
+}
+
+*/
+
+
+void *handle_games(void *client_socket){
+
+    int new_socket = *(int *)client_socket;
+    free(client_socket);
+
+    char buffer[BUFFER_SIZE] = {0};
+    char username[50] = {0};
+
+    const char *hello = "Message received";
+
+    int bytes_received = recv(new_socket, username, sizeof(username) - 1, 0);
 
     while (1) {
         memset(buffer, 0, BUFFER_SIZE);
@@ -130,7 +173,7 @@ void *handle_client(void *client_socket) {
             break;
         }
 
-        printf("%s: %s\n", username, buffer);
+        printf("%s\n", buffer);
 
         send(new_socket, hello, strlen(hello), 0);
         //printf("Mensaje enviado al cliente\n");
@@ -139,7 +182,9 @@ void *handle_client(void *client_socket) {
     close(new_socket); 
 
     return NULL;
+
 }
+
 
 extern inline int setup_server(Server *server, char* IP, char* port) {
     server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -190,7 +235,7 @@ extern inline void accept_clients(Server *server) {
             continue;
         }
 
-        if (pthread_create(&thread_id, NULL, handle_client, (void *)new_socket) != 0) {
+        if (pthread_create(&thread_id, NULL, handle_games, (void *)new_socket) != 0) {
             perror("Thread creation failed");
             close(*new_socket);
             free(new_socket);
