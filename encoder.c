@@ -16,6 +16,26 @@ struct attack {
 
 //Siempre son 12 barcos.
 
+extern inline struct ship* inputShips() {
+	static struct ship ship[9] = { 0 };
+
+	for (char i = 0; i < 9; i++) {
+		printf("%x \n", i);
+		printf("coordenada X: ");
+		scanf("%x", &ship[i].posX);
+		printf("coordenada Y: ");
+		scanf("%x", &ship[i].posY);
+		printf("tamaño: ");
+		scanf("%x", &ship[i].size);
+
+		printf("dirección (1 o 0): ");
+
+		scanf("%x", &ship[i].dir);
+	}
+	printf("Se pudo terminar el loop");
+	return ship;
+}
+
 unsigned char* encode (struct ship arr[]) { //Podemos a�adir una variable "K" para que la cantidad de barcos sea dynamica.
 	static unsigned char encoded[14] = { 0 }; //Con variable dynamica el tama�o de este char seria (Roof)K*3/2. cada barco es de 12 bits, y lo que mandamos esta en bytes, lo mismo aplica para las otras funciones.
 	unsigned char bPos=0;
@@ -131,8 +151,7 @@ void initialize(struct ship navy[]){
 }
 //El main es solo para pruebas, lo quitamos despues.
 int main(int argc, char* argv[]) {
-	struct ship navy[9];
-	initialize(navy);
+	struct ship* navy = inputShips();
 	//decode(encode(navy));
 	decode(encode(navy));
 	struct attack a;
