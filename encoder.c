@@ -111,44 +111,6 @@ struct attack decodeAttack(unsigned char A) {
 }
 
 
-void initialize(struct ship navy[]){
-	navy[0].posX = 1;
-	navy[0].posY = 1;
-	navy[0].size = 2;
-	navy[0].dir = 0;
-	navy[1].posX = 9;
-	navy[1].posY = 1;
-	navy[1].size = 0;
-	navy[1].dir = 0;
-	navy[2].posX = 0;
-	navy[2].posY = 0;
-	navy[2].size = 0;
-	navy[2].dir = 0;
-	navy[3].posX = 9;
-	navy[3].posY = 9;
-	navy[3].size = 2;
-	navy[3].dir = 0;
-	navy[4].posX = 9;
-	navy[4].posY = 9;
-	navy[4].size = 2;
-	navy[4].dir = 0;
-	navy[5].posX = 9;
-	navy[5].posY = 9;
-	navy[5].size = 2;
-	navy[5].dir = 0;
-	navy[6].posX = 9;
-	navy[6].posY = 9;
-	navy[6].size = 2;
-	navy[6].dir = 0;
-	navy[7].posX = 9;
-	navy[7].posY = 9;
-	navy[7].size = 2;
-	navy[7].dir = 0;
-	navy[8].posX = 9;
-	navy[8].posY = 9;
-	navy[8].size = 2;
-	navy[8].dir = 1;
-}
 //El main es solo para pruebas, lo quitamos despues.
 int main(int argc, char* argv[]) {
 	struct ship* navy = inputShips();
