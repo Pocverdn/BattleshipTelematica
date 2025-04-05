@@ -64,18 +64,20 @@ extern inline struct ship* inputShips() {
     static struct ship ship[9] = { 0 };
    
     for (char i = 0; i < 9; i++) {
+        printf("%x \n", i);
         printf("coordenada X: ");
-        scanf("%hhu", &ship[i].posX);
+        scanf("%x", &ship[i].posX);
         printf("coordenada Y: ");
-        scanf("%hhu", &ship[i].posY);
+        scanf("%x", &ship[i].posY);
         printf("tamaño: ");
-        scanf("%hhu", &ship[i].size);
-        
+        scanf("%x", &ship[i].size);
+
         printf("dirección (1 o 0): ");
-        int temp_dir;
-        scanf("%d", &temp_dir);
-        ship[i].dir = (temp_dir != 0);
+
+        scanf("%x", &ship[i].dir);
     }
+    printf("Se pudo terminar el loop");
+    return ship;
 }
 
 extern inline map* gameStart(struct ship ships[]) {
@@ -160,15 +162,15 @@ extern inline void chat_with_server(int client_fd) {
 
     //printf("Connected to server as %s! Type 'exit' to close connection.\n", username);
 
-    /*
-    struct ship* ships = inputShips();
+    
+    struct ship* navy = inputShips();
     printf("Prueba2 ");
-    map* mapa = gameStart(ships);
+    map* mapa = gameStart(navy);
     printf("Prueba2 ");
-    unsigned char* sendbuf = encode(ships);
+    unsigned char* sendbuf = encode(navy);
 
     send(client_fd, sendbuf, 14, 0);
-    */
+    
 
     while (1) {
         char msg[BUFFER_SIZE];
