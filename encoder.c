@@ -115,7 +115,15 @@ struct attack decodeAttack(unsigned char A) {
 int main(int argc, char* argv[]) {
 	struct ship* navy = inputShips();
 	//decode(encode(navy));
-	decode(encode(navy));
+	navy = decode(encode(navy));
+	for (int i = 0; i < 9; ++i) {
+		printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
+			i + 1,
+			navy[i].posX,
+			navy[i].posY,
+			navy[i].size,
+			navy[i].dir ? "Vertical" : "Horizontal");
+	}
 	struct attack a;
 	a.posX = 7;
 	a.posY = 6;
