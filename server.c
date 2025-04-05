@@ -314,7 +314,6 @@ void *handle_games(void *client_socket){
         return NULL;
     }
 
-
     while (1) {
         memset(buffer, 0, BUFFER_SIZE);
         bytes_received = recv(new_socket, buffer, BUFFER_SIZE - 1, 0);
@@ -324,13 +323,13 @@ void *handle_games(void *client_socket){
             break;
         }
 
-        printf("Datos recibidos: %x\n", buffer);
+        printf("Datos recibidos: %s\n", buffer);
 
-        //int count = 0;
-        struct ship* ships = decode(buffer);
+        int count = 0;
+        struct ship* ships = deserializeShips(buffer, &count);
 
-        
-        for (int i = 0; i < 9; ++i) {
+        printf("Barcos recibidos (%d):\n", count);
+        for (int i = 0; i < count; ++i) {
             printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
                    i + 1,
                    ships[i].posX,
