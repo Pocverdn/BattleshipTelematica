@@ -13,7 +13,7 @@ using namespace std;
 #define BUFFER_SIZE 2500
 
 const int SIZE = 10;
-const int TOTAL_SHIPS = 3;
+const int TOTAL_SHIPS = 9;
 
 struct Config {
     char server_ip[256];
@@ -302,8 +302,8 @@ void chat_with_server(int client_fd) {
     initializeBoard(board1);
     setShips(board1, ships1, 1);
 
-    std::string serialized = serializeShips(ships1, TOTAL_SHIPS);
-    send(client_fd, serialized.c_str(), serialized.size(), 0);
+    unsigned char* serialized = encode(ships1);
+    send(client_fd, serialized, 14, 0);
 
     /*
     while (true) {
