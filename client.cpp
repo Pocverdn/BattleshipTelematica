@@ -81,7 +81,7 @@ void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], int playerNumber)
     cout << "\nJugador " << playerNumber << ", coloca tus " << TOTAL_SHIPS << " barcos.\n";
     for (int i = 0; i < TOTAL_SHIPS; ++i) {
         ship s;
-        bool cabe = false;
+        bool put = false;
         do {
             int x, y, size;
             int dir;
@@ -93,18 +93,18 @@ void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], int playerNumber)
             s.size = size;
             s.dir = dir;
 
-            cabe = (s.dir == 0 && ((s.posX + s.size) <= SIZE)) || (s.dir == 1 && ((s.posY + s.size) <= SIZE));
+            bool cabe = (s.dir == 0 && ((s.posX + s.size) <= SIZE)) || (s.dir == 1 && ((s.posY + s.size) <= SIZE));
 
-            if (cabe) {
-                if (placeShipSize(board, s)) {
-                    ships[i] = s;
-                    break;
-                }
+
+            if (placeShipSize(board, s) && cabe) {
+                ships[i] = s;
+                put = true;
+            
             }else {
                 cout << "Posicion inválida. Intenta de nuevo.\n";
             }   
 
-        } while(!cabe);
+        } while(!put);
     }
 }
 
@@ -250,6 +250,17 @@ void chat_with_server(int client_fd) {
     setShips(board1, ships1, 1);
 
     unsigned char* serialized = encode(ships1);
+
+    for (int i = 0; i < 9; ++i) {
+        printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
+               i + 1,
+               ships1[i].posX,
+               ships1[i].posY,
+               ships1[i].size,
+               ships1[i].dir ? "Vertical" : "Horizontal");
+    }
+
+
     send(client_fd, serialized, 14, 0);
     
 }
