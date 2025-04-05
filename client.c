@@ -13,8 +13,8 @@
 
 
 // Buffer
-#define BUFFER_SIZE 2500
-#define BUFFER_attack 1
+#define BUFFER_SIZE 2500 
+#define BUFFER_attack 1 
 
 // Parser de archivo
 typedef struct {
@@ -64,20 +64,18 @@ extern inline struct ship* inputShips() {
     static struct ship ship[9] = { 0 };
    
     for (char i = 0; i < 9; i++) {
-        printf("%x \n", i);
         printf("coordenada X: ");
-        scanf("%x", &ship[i].posX);
+        scanf("%hhu", &ship[i].posX);
         printf("coordenada Y: ");
-        scanf("%x", &ship[i].posY);
+        scanf("%hhu", &ship[i].posY);
         printf("tamaño: ");
-        scanf("%x", &ship[i].size);
-
+        scanf("%hhu", &ship[i].size);
+        
         printf("dirección (1 o 0): ");
-
-        scanf("%x", &ship[i].dir);
+        int temp_dir;
+        scanf("%d", &temp_dir);
+        ship[i].dir = (temp_dir != 0);
     }
-    printf("Se pudo terminar el loop");
-    return ship;
 }
 
 extern inline map* gameStart(struct ship ships[]) {
@@ -162,15 +160,15 @@ extern inline void chat_with_server(int client_fd) {
 
     //printf("Connected to server as %s! Type 'exit' to close connection.\n", username);
 
-    
-    struct ship* navy = inputShips();
+    /*
+    struct ship* ships = inputShips();
     printf("Prueba2 ");
-    map* mapa = gameStart(navy);
+    map* mapa = gameStart(ships);
     printf("Prueba2 ");
-    unsigned char* sendbuf = encode(navy);
+    unsigned char* sendbuf = encode(ships);
 
     send(client_fd, sendbuf, 14, 0);
-    
+    */
 
     while (1) {
         char msg[BUFFER_SIZE];
