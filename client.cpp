@@ -115,8 +115,8 @@ bool placeShipSize(char board[SIZE][SIZE], ship s) {
     return true;
 }
 
-void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], string playerName) {
-    cout << "\nJugador " << playerName << ", coloca tus " << TOTAL_SHIPS << " barcos.\n";
+void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], int playerNumber) {
+    cout << "\nJugador " << playerNumber << ", coloca tus " << TOTAL_SHIPS << " barcos.\n";
     for (int i = 0; i < TOTAL_SHIPS; ++i) {
         ship s;
         bool cabe = false;
@@ -133,10 +133,10 @@ void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], string playerName
 
             cabe = (s.dir == 0 && ((s.posX + s.size) <= SIZE)) || (s.dir == 1 && ((s.posY + s.size) <= SIZE));
 
-            //cout << s.posX << endl;
-            //cout << s.size << endl;
-            //cout << s.posX + s.size << endl;
-            //cout << SIZE<< endl;
+            cout << s.posX << endl;
+            cout << s.size << endl;
+            cout << s.posX + s.size << endl;
+            cout << SIZE<< endl;
 
             if (cabe) {
                 if (placeShipSize(board, s)) {
@@ -300,7 +300,7 @@ void chat_with_server(int client_fd) {
     ship ships1[TOTAL_SHIPS];
 
     initializeBoard(board1);
-    setShips(board1, ships1, username);
+    setShips(board1, ships1, 1);
 
     std::string serialized = serializeShips(ships1, TOTAL_SHIPS);
     send(client_fd, serialized.c_str(), serialized.size(), 0);
