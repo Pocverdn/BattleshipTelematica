@@ -10,7 +10,7 @@
 
 using namespace std;
 
-#define BUFFER_SIZE 2500
+#define BUFFER_SIZE 14
 
 const int SIZE = 10;
 const int TOTAL_SHIPS = 9;
@@ -48,6 +48,27 @@ unsigned char* encode(ship arr[]) {
     }
     std::cout << "El primer byte de la cadena codificada: " << std::hex << (int)encoded[0] << std::endl;
     return encoded;
+}
+
+ship* decode(const unsigned char arr[]) {
+    static ship decoded[9] = { 0 };
+    unsigned char bPos = 0;
+
+    for (char i = 0; i < 9; ++i) {
+        decoded[i].posX = (arr[bPos / 8] >> (bPos % 8)) & 0xF;
+        bPos += 4;
+
+        decoded[i].posY = (arr[bPos / 8] >> (bPos % 8)) & 0xF;
+        bPos += 4;
+
+        decoded[i].size = (arr[bPos / 8] >> (bPos % 8)) & 0x7;
+        bPos += 3;
+
+        decoded[i].dir = (arr[bPos / 8] >> (bPos % 8)) & 0x1;
+        bPos += 1;
+    }
+
+    return decoded;
 }
 
 void initializeBoard(char board[SIZE][SIZE]){
@@ -161,7 +182,6 @@ int countShips(ship ships[TOTAL_SHIPS]){
     return total;
 }
 
-
 void trim(std::string& str) {
     size_t first = str.find_first_not_of(' ');
     size_t last = str.find_last_not_of(" \n\r");
@@ -250,18 +270,24 @@ void chat_with_server(int client_fd) {
     setShips(board1, ships1, 1);
 
     unsigned char* serialized = encode(ships1);
-
-    for (int i = 0; i < 9; ++i) {
-        printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
-               i + 1,
-               ships1[i].posX,
-               ships1[i].posY,
-               ships1[i].size,
-               ships1[i].dir ? "Vertical" : "Horizontal");
-    }
-
-
     send(client_fd, serialized, 14, 0);
+
+    int bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
+    if (bytes_received > 0) {
+        std::cout << "Recibiendo barcos del oponente...\n";
+        ship* opponentShips = decode((unsigned char*)buffer);
+
+        std::cout << "Barcos del oponente:\n";
+        for (int i = 0; i < TOTAL_SHIPS; ++i) {
+            std::cout << "Barco #" << i + 1 << ": "
+                      << "PosX=" << (int)opponentShips[i].posX << ", "
+                      << "PosY=" << (int)opponentShips[i].posY << ", "
+                      << "Tamaño=" << (int)opponentShips[i].size << ", "
+                      << "Dirección=" << (opponentShips[i].dir ? "Vertical" : "Horizontal") << "\n";
+        }
+    } else {
+        std::cerr << "Error al recibir los barcos del servidor.\n";
+    }
     
 }
 
