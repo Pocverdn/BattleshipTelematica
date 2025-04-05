@@ -184,8 +184,8 @@ bool placeShipSize(char board[SIZE][SIZE], ship s) {
     return true;
 }
 
-void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], int playerNumber) {
-    printf("\nJugador %d, coloca tus %d barcos.\n", playerNumber, TOTAL_SHIPS);
+void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char* playerName) {
+    printf("\nJugador %s, coloca tus %d barcos.\n", playerName, TOTAL_SHIPS);
     for (int i = 0; i < TOTAL_SHIPS; ++i) {
         ship s;
         bool valid = false;
