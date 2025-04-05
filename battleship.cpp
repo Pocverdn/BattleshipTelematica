@@ -135,15 +135,15 @@ int countShips(ship ships[TOTAL_SHIPS]){
 
 
 int main() {
-    char board1[SIZE][SIZE], board2[SIZE][SIZE];
-    ship ships1[TOTAL_SHIPS], ships2[TOTAL_SHIPS];
-    int hits1 = 0, hits2 = 0;
+    char board1[SIZE][SIZE]
+    ship ships1[TOTAL_SHIPS]
+    int hits1 = 0,
 
     initializeBoard(board1);
-    initializeBoard(board2);
+
 
     setShips(board1, ships1, 1);
-    setShips(board2, ships2, 2);
+
 
     int totalHitsNeeded = countShips(ships1);
 
