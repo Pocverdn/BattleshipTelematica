@@ -84,9 +84,9 @@ void setShips(char board[10][10],struct ship ships[9], int playerNumber) {
 					ships[i] = s;
 					put = true;
 				}
-				else if (randp) {
+				else if (randp) 
 					cout << "Posicion inválida. Intenta de nuevo.\n";
-				}
+				
 	
 			} while (!put);
 		}
