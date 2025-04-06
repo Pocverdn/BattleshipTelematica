@@ -405,24 +405,7 @@ void chat_with_server(int client_fd) {
     game(client_fd, board1, ships1, board2, totalHitsNeeded);
 
 
-    /*
-    int bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
-    if (bytes_received > 0) {
-        std::cout << "Recibiendo barcos del oponente...\n";
-        ship* opponentShips = decode((unsigned char*)buffer);
 
-        std::cout << "Barcos del oponente:\n";
-        for (int i = 0; i < TOTAL_SHIPS; ++i) {
-            std::cout << "Barco #" << i + 1 << ": "
-                      << "PosX=" << (int)opponentShips[i].posX << ", "
-                      << "PosY=" << (int)opponentShips[i].posY << ", "
-                      << "Tamaño=" << (int)opponentShips[i].size << ", "
-                      << "Dirección=" << (opponentShips[i].dir ? "Vertical" : "Horizontal") << "\n";
-        }
-    } else {
-        std::cerr << "Error al recibir los barcos del servidor.\n";
-    }
-    */
 
     
 
