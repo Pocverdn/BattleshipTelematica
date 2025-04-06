@@ -100,6 +100,8 @@ bool placeShipSize(char board[SIZE][SIZE], ship s) {
     return true;
 }
 
+
+/*
 void setShips(char board[10][10],struct ship ships[9], string username) {
 	cout << "\nJugador " << username << ", quieres colocar tus barcos (1 para sí o 0 para no)?\n";
 	bool randp;
@@ -138,6 +140,50 @@ void setShips(char board[10][10],struct ship ships[9], string username) {
 
         } while (!put);
     }
+}
+*/
+
+
+void setShips(char board[10][10],struct ship ships[9], string username) {
+	cout << "\nJugador " << username << ", quieres colocar tus barcos (1 para sí o 0 para no)?\n";
+	bool randp;
+	cin >> randp;
+	char sizes[9] = { 1,1,1,2,2,3,3,4,5 };
+	for (int i = 0; i < 9; ++i) {
+	struct ship s;
+	bool put = false;
+		do {
+			int x, y, size;
+			int dir;
+			if (randp) {
+				cout << "Barco #" << i + 1 << " - Ingresa X Y Tamano Direccion(H=0/V=1): ";
+				cin >> x >> y >> dir;
+			}
+			else {
+				x = rand() % 10;
+				y = rand() % 10;
+				dir = rand() % 1;
+			}
+
+			s.posX = x;
+			s.posY = y;
+			s.size = sizes[i];
+			s.dir = dir;
+
+			bool cabe = (s.dir == 0 && ((s.posX + s.size) <= 10)) || (s.dir == 1 && ((s.posY + s.size) <= 10));
+
+
+			if (placeShipSize(board, s) && cabe) {
+				ships[i] = s;
+				put = true;
+			}
+			else if (randp) {
+				cout << "Posicion inválida. Intenta de nuevo.\n";
+			}
+
+		} while (!put);
+	}
+
 }
 
 void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char secondBoard[SIZE][SIZE]) {
@@ -297,7 +343,7 @@ std::string serializeShips(ship ships[], int total) {
     return result;
 }
 
-void game(int sock, char board[SIZE][SIZE], char enemyBoard[SIZE][SIZE], int totalH) {
+void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], int totalH) {
     attack att;
     char buffer[32];
     int totalHits = 0;
@@ -355,7 +401,7 @@ void game(int sock, char board[SIZE][SIZE], char enemyBoard[SIZE][SIZE], int tot
             cout << "\nEsperando al otro jugador...\n";
         }
 
-        showBoard(board, nullptr, enemyBoard);
+        showBoard(board, ships, enemyBoard);
     }
 
 }
@@ -385,7 +431,7 @@ void chat_with_server(int client_fd) {
     unsigned char* serialized = encode(ships1);
     send(client_fd, serialized, 14, 0);
 
-    game(client_fd, board1, board2, totalHitsNeeded);
+    game(client_fd, board1, ships1, board2, totalHitsNeeded);
 
 
     /*

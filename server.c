@@ -127,15 +127,6 @@ bool placeShipSize(char board[SIZE][SIZE], ship s) {
     for(int i = 0; i < s.size; ++i) {
         int x = s.posX + (s.dir ? i : 0);
         int y = s.posY + (s.dir ? 0 : i);
-
-        if (x >= SIZE || y >= SIZE || board[x][y] != '~') {
-            return false; // fuera del tablero o espacio ocupado
-        }
-    }
-
-    for(int i = 0; i < s.size; ++i) {
-        int x = s.posX + (s.dir ? i : 0);
-        int y = s.posY + (s.dir ? 0 : i);
         board[x][y] = 'B';
     }
 
@@ -145,34 +136,7 @@ bool placeShipSize(char board[SIZE][SIZE], ship s) {
 void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char* username) {
     printf("\nJugador %s, coloca tus %d barcos.\n", username, TOTAL_SHIPS);
     for (int i = 0; i < TOTAL_SHIPS; ++i) {
-        ship s;
-        bool valid = false;
-
-        do {
-            int x, y, size, dir;
-            printf("Barco #%d - Ingresa X Y Tamano Direccion (H=0/V=1): ", i + 1);
-            scanf("%d %d %d %d", &x, &y, &size, &dir);
-
-            s.posX = x;
-            s.posY = y;
-            s.size = size;
-            s.dir = dir;
-
-            bool cabe = (s.dir == 0 && ((s.posX + s.size) <= SIZE)) ||
-                        (s.dir == 1 && ((s.posY + s.size) <= SIZE));
-
-            if (cabe) {
-                if (placeShipSize(board, s)) {
-                    ships[i] = s;
-                    valid = true;
-                } else {
-                    printf("Esa posición ya está ocupada. Intenta de nuevo.\n");
-                }
-            } else {
-                printf("Posición inválida. Intenta de nuevo.\n");
-            }
-
-        } while (!valid);
+        placeShipSize(board, ships[i]);
     }
 }
 
@@ -217,6 +181,8 @@ bool shoot(char board[SIZE][SIZE], int x, int y) {
         printf("Coordenadas inválidas.\n");
         return false;
     }
+
+    printf("%c \n", board[x][y]);
 
     if (board[x][y] == 'B') {
         board[x][y] = 'X';
@@ -417,6 +383,11 @@ void *handle_games(void *client_socket){
         showBoard(board1, session->ships1);
         showBoard(board2, session->ships2);
 
+        setShips(board1, session->ships1, session->player1_name);
+        setShips(board2, session->ships2, session->player2_name);
+
+        printf("%c\n",board1[1][1]);
+
         int hits1 = 0;
         int hits2 = 0;
 
@@ -427,6 +398,7 @@ void *handle_games(void *client_socket){
         attack att;
 
         while (hits1 < totalHitsNeeded && hits2 < totalHitsNeeded) {
+            printf("\nNuevo turno\n");
             if (turn) {
                 send(session->player1_fd, "Tu turno", strlen("Tu turno") + 1, 0);
                 
