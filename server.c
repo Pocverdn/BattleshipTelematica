@@ -11,7 +11,7 @@
 //#define PORT 8080
 
 //14 bytes para envio de posiciones de barcos - 1 byte para comfirmación de disparo
-#define BUFFER_SIZE 32
+#define BUFFER_SIZE 14
 #define BUFFER_SIZE_Confirm 1
 
 // Maximo de secciones
@@ -34,6 +34,7 @@ typedef struct ship {
     unsigned char posY;  // 4 bits
     unsigned char size;  // 3 bits
     bool dir;            // 0 = horizontal, 1 = vertical
+    unsigned char hp;
 } ship;
 
 struct attack {
@@ -132,8 +133,8 @@ bool placeShipSize(char board[SIZE][SIZE], ship s) {
     return true;
 }
 
-void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], int playerNumber) {
-    printf("\nJugador %d, coloca tus %d barcos.\n", playerNumber, TOTAL_SHIPS);
+void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char* username) {
+    printf("\nJugador %s, coloca tus %d barcos.\n", username, TOTAL_SHIPS);
     for (int i = 0; i < TOTAL_SHIPS; ++i) {
         ship s;
         bool valid = false;
@@ -166,7 +167,7 @@ void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], int playerNumber)
     }
 }
 
-void showBoard(char board[SIZE][SIZE]) {
+void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS]) {
     printf("  ");
     for (int j = 0; j < SIZE; ++j) printf("%d ", j);
     printf("\n");
@@ -174,10 +175,29 @@ void showBoard(char board[SIZE][SIZE]) {
     for (int i = 0; i < SIZE; ++i) {
         printf("%d ", i);
         for (int j = 0; j < SIZE; ++j) {
-            if (board[i][j] == 'X' || board[i][j] == 'O')
+            int isShip = 0;
+
+            for (int k = 0; k < TOTAL_SHIPS; ++k) {
+                ship s = ships[k];
+                for (int l = 0; l < s.size; ++l) {
+                    int x = s.posX + (s.dir ? l : 0);
+                    int y = s.posY + (s.dir ? 0 : l);
+
+                    if (x == i && y == j) {
+                        isShip = 1;
+                        break;
+                    }
+                }
+                if (isShip) break;
+            }
+
+            if (isShip) {
+                printf("B ");
+            } else if (board[i][j] == 'X' || board[i][j] == 'O') {
                 printf("%c ", board[i][j]);
-            else
+            } else {
                 printf("~ ");
+            }
         }
         printf("\n");
     }
@@ -242,18 +262,29 @@ struct ship* deserializeShips(const char* serialized, int* count) {
     return ships;
 }
 
+/*
+int send_encoded_ships(int client_fd, ship ships[]) {
+    unsigned char *buffer = encode(ships);
+    int sent = send(client_fd, buffer, strlen(buffer), 0);
+    printf("Sent: %d\n", sent);
+    if (sent == -1) {
+        perror("Error enviando barco codificado");
+        return -1;
+    }
+    printf("Sent: %d\n", sent);
+}
+*/
+
 int receive_encoded_ships(int client_fd, ship ships[]) {
     unsigned char buffer[BUFFER_SIZE];
     int bytes = read(client_fd, buffer, BUFFER_SIZE);
     printf("bytes: %d\n", bytes);
-    /*
+    
     if (bytes != BUFFER_SIZE) {
         perror("Error leyendo buffer codificado");
         return -1;
     }
 
-    */
-    
     struct ship *decoded = decode(buffer);
     memcpy(ships, decoded, sizeof(struct ship) * TOTAL_SHIPS);
     return 0;
@@ -297,7 +328,6 @@ void *handle_games(void *client_socket){
 
     pthread_mutex_lock(&session_mutex);
 
-
     GameSession *session = &game_sessions[current_session];
 
     if (session->player1_fd == 0) {
@@ -312,31 +342,35 @@ void *handle_games(void *client_socket){
         strncpy(session->player2_name, username, sizeof(session->player2_name));
         memcpy(session->ships2, player_ships, sizeof(ship) * TOTAL_SHIPS);
 
-        /*
-        for (int i = 0; i < 9; ++i) {
-            printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
-                   i + 1,
-                   session->ships1[i].posX,
-                   session->ships1[i].posY,
-                   session->ships1[i].size,
-                   session->ships1[i].dir ? "Vertical" : "Horizontal");   
+        char board1[SIZE][SIZE];
+        char board2[SIZE][SIZE];
+
+        initializeBoard(board1);
+        initializeBoard(board2);
+
+        showBoard(board1, session->ships1);
+        showBoard(board2, session->ships2);
+
+        int hits1 = 0,
+        int hits2 = 0,
+
+        int totalHitsNeeded = countShips(session->ships1);
+
+        cout << "\n---- ¡Comienza el juego! ----\n";
+        bool turn = true;
+
+        while (hits1 < totalHitsNeeded && hits2 < totalHitsNeeded) {
+            if (turn) {
+
+            } else {
+
+            }
+            turn = !turn;
         }
 
-        printf("-------------------------------------------------------------------------------------\n");
 
-        for (int i = 0; i < 9; ++i) {
-            printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
-                   i + 1,
-                   session->ships2[i].posX,
-                   session->ships2[i].posY,
-                   session->ships2[i].size,
-                   session->ships2[i].dir ? "Vertical" : "Horizontal");   
-        }
-        */
-
-        
-        send_encoded_ships(session->player1_fd, session->ships2);
-        send_encoded_ships(session->player2_fd, session->ships2);
+        send(session->player1_fd, hello, strlen(hello), 0);
+        send(session->player2_fd, hello, strlen(hello), 0);
 
         
         current_session++;
@@ -344,43 +378,9 @@ void *handle_games(void *client_socket){
             current_session = 0;
         }
     }
-
-
-    /*
-    while (1) {
-        memset(buffer, 0, BUFFER_SIZE);
-        bytes_received = recv(new_socket, buffer, BUFFER_SIZE - 1, 0);
-
-        if (bytes_received <= 0) {
-            printf("Cliente desconectado\n");
-            break;
-        }
-
-        printf("Datos recibidos: %x\n", buffer);
-
-        //int count = 0;
-        struct ship* ships = decode(buffer);
-
-        
-        for (int i = 0; i < 9; ++i) {
-            printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
-                   i + 1,
-                   ships[i].posX,
-                   ships[i].posY,
-                   ships[i].size,
-                   ships[i].dir ? "Vertical" : "Horizontal");
-        }
-
-        send(new_socket, hello, strlen(hello), 0);
-    }
-
-    close(new_socket); 
-    */
-
     
     pthread_mutex_unlock(&session_mutex);
     
-
     return NULL;
 
 }

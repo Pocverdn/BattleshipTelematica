@@ -141,9 +141,7 @@ int main() {
 
     initializeBoard(board1);
 
-
     setShips(board1, ships1, 1);
-
 
     int totalHitsNeeded = countShips(ships1);
 

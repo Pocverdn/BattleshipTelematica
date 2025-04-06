@@ -57,39 +57,39 @@ void setShips(char board[10][10],struct ship ships[9], int playerNumber) {
 	bool randp;
 	cin >> randp;
 	char sizes[9] = { 1,1,1,2,2,3,3,4,5 };
-		for (int i = 0; i < 9; ++i) {
-		struct ship s;
-		bool put = false;
-			do {
-				int x, y, size;
-				int dir;
-				if (randp) {
-					cout << "Barco #" << i + 1 << " - Ingresa X Y Tamano Direccion(H=0/V=1): ";
-					cin >> x >> y >> dir;
-				}
-				else {
-					x = rand() % 10;
-					y = rand() % 10;
-					dir = rand() % 1;
-				}
+	for (int i = 0; i < 9; ++i) {
+	struct ship s;
+	bool put = false;
+		do {
+			int x, y, size;
+			int dir;
+			if (randp) {
+				cout << "Barco #" << i + 1 << " - Ingresa X Y Tamano Direccion(H=0/V=1): ";
+				cin >> x >> y >> dir;
+			}
+			else {
+				x = rand() % 10;
+				y = rand() % 10;
+				dir = rand() % 1;
+			}
 
-				s.posX = x;
-				s.posY = y;
-				s.size = sizes[i];
-				s.dir = dir;
+			s.posX = x;
+			s.posY = y;
+			s.size = sizes[i];
+			s.dir = dir;
 
-				bool cabe = (s.dir == 0 && ((s.posX + s.size) <= 10)) || (s.dir == 1 && ((s.posY + s.size) <= 10));
+			bool cabe = (s.dir == 0 && ((s.posX + s.size) <= 10)) || (s.dir == 1 && ((s.posY + s.size) <= 10));
 
-				if (placeShipSize(board, s) && cabe) {
-					ships[i] = s;
-					put = true;
-				}
-				else if (randp) {
-					cout << "Posicion inválida. Intenta de nuevo.\n";
-				}
-	
-			} while (!put);
-		}
+			if (placeShipSize(board, s) && cabe) {
+				ships[i] = s;
+				put = true;
+			}
+			else if (randp) {
+				cout << "Posicion inválida. Intenta de nuevo.\n";
+			}
+
+		} while (!put);
+	}
 }
 
 void showBoard(char board[10][10]) {
@@ -244,3 +244,59 @@ int main(int argc, char* argv[]) {
 	//printf("%02x", *(test+1));
 
 }
+
+
+        /*
+        for (int i = 0; i < 9; ++i) {
+            printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
+                   i + 1,
+                   session->ships1[i].posX,
+                   session->ships1[i].posY,
+                   session->ships1[i].size,
+                   session->ships1[i].dir ? "Vertical" : "Horizontal");   
+        }
+        printf("-------------------------------------------------------------------------------------\n");
+        for (int i = 0; i < 9; ++i) {
+            printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
+                   i + 1,
+                   session->ships2[i].posX,
+                   session->ships2[i].posY,
+                   session->ships2[i].size,
+                   session->ships2[i].dir ? "Vertical" : "Horizontal");   
+        }
+        */
+
+        //send_encoded_ships(session->player1_fd, session->ships2);
+        //send_encoded_ships(session->player2_fd, session->ships2);
+
+
+    /*
+    while (1) {
+        memset(buffer, 0, BUFFER_SIZE);
+        bytes_received = recv(new_socket, buffer, BUFFER_SIZE - 1, 0);
+
+        if (bytes_received <= 0) {
+            printf("Cliente desconectado\n");
+            break;
+        }
+
+        printf("Datos recibidos: %x\n", buffer);
+
+        //int count = 0;
+        struct ship* ships = decode(buffer);
+
+        
+        for (int i = 0; i < 9; ++i) {
+            printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
+                   i + 1,
+                   ships[i].posX,
+                   ships[i].posY,
+                   ships[i].size,
+                   ships[i].dir ? "Vertical" : "Horizontal");
+        }
+
+        send(new_socket, hello, strlen(hello), 0);
+    }
+
+    close(new_socket); 
+    */

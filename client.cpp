@@ -25,6 +25,7 @@ struct ship {
     unsigned char posY;  // 4 bits
     unsigned char size;  // 3 bits
     bool dir;            // 0 = horizontal, 1 = vertical
+    unsigned char hp = 0;
 };
 
 struct attack {
@@ -98,48 +99,89 @@ bool placeShipSize(char board[SIZE][SIZE], ship s) {
     return true;
 }
 
-void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], int playerNumber) {
-    cout << "\nJugador " << playerNumber << ", coloca tus " << TOTAL_SHIPS << " barcos.\n";
-    for (int i = 0; i < TOTAL_SHIPS; ++i) {
-        ship s;
-        bool put = false;
+void setShips(char board[10][10],struct ship ships[9], string username) {
+	cout << "\nJugador " << username << ", quieres colocar tus barcos (1 para sí o 0 para no)?\n";
+	bool randp;
+	cin >> randp;
+	char sizes[9] = { 1,1,1,2,2,3,3,4,5 };
+    for (int i = 0; i < 9; ++i) {
+    struct ship s;
+    bool put = false;
         do {
             int x, y, size;
             int dir;
-            cout << "Barco #" << i+1 << " - Ingresa X Y Tamano Direccion(H=0/V=1): ";
-            cin >> x >> y >> size >> dir;
+            if (randp) {
+                cout << "Barco #" << i + 1 << " - Ingresa X Y Tamano Direccion(H=0/V=1): ";
+                cin >> x >> y >> dir;
+            }
+            else {
+                x = rand() % 10;
+                y = rand() % 10;
+                dir = rand() % 1;
+            }
 
             s.posX = x;
             s.posY = y;
-            s.size = size;
+            s.size = sizes[i];
             s.dir = dir;
 
-            bool cabe = (s.dir == 0 && ((s.posX + s.size) <= SIZE)) || (s.dir == 1 && ((s.posY + s.size) <= SIZE));
-
+            bool cabe = (s.dir == 0 && ((s.posX + s.size) <= 10)) || (s.dir == 1 && ((s.posY + s.size) <= 10));
 
             if (placeShipSize(board, s) && cabe) {
                 ships[i] = s;
                 put = true;
-            
-            }else {
-                cout << "Posicion inválida. Intenta de nuevo.\n";
-            }   
+            }
+            else if (randp) {
+				cout << "Posicion inválida. Intenta de nuevo.\n";
+			}
 
-        } while(!put);
+        } while (!put);
     }
 }
 
-void showBoard(char board[SIZE][SIZE]){
+void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char secondBoard[SIZE][SIZE]) {
     cout << "  ";
     for (int j = 0; j < SIZE; ++j) cout << j << " ";
+    cout << "   "; 
+    for (int j = 0; j < SIZE; ++j) cout << j << " ";
     cout << endl;
+
     for (int i = 0; i < SIZE; ++i) {
         cout << i << " ";
         for (int j = 0; j < SIZE; ++j) {
-            if (board[i][j] == 'X' || board[i][j] == 'O')
+            bool isShip = false;
+
+            for (int k = 0; k < TOTAL_SHIPS; ++k) {
+                ship s = ships[k];
+                for (int l = 0; l < s.size; ++l) {
+                    int x = s.posX + (s.dir ? l : 0);
+                    int y = s.posY + (s.dir ? 0 : l);
+
+                    if (x == i && y == j) {
+                        isShip = true;
+                        break;
+                    }
+                }
+                if (isShip) break;
+            }
+
+            if (isShip) {
+                cout << "B ";
+            } else if (board[i][j] == 'X' || board[i][j] == 'O') {
                 cout << board[i][j] << " ";
-            else
+            } else {
                 cout << "~ ";
+            }
+        }
+
+        cout << "   ";
+
+        for (int j = 0; j < SIZE; ++j) {
+            if (secondBoard[i][j] == 'X' || secondBoard[i][j] == 'O') {
+                cout << secondBoard[i][j] << " ";
+            } else {
+                cout << "~ ";
+            }
         }
         cout << endl;
     }
@@ -264,11 +306,14 @@ void chat_with_server(int client_fd) {
     send(client_fd, username.c_str(), username.length(), 0);
 
     char board1[SIZE][SIZE];
+    char board2[SIZE][SIZE];
     ship ships1[TOTAL_SHIPS];
 
     initializeBoard(board1);
-    setShips(board1, ships1, 1);
-
+    initializeBoard(board2);
+    setShips(board1, ships1, username);
+    showBoard(board1, ships1, board2);
+    
     unsigned char* serialized = encode(ships1);
     send(client_fd, serialized, 14, 0);
 
@@ -288,6 +333,12 @@ void chat_with_server(int client_fd) {
     } else {
         std::cerr << "Error al recibir los barcos del servidor.\n";
     }
+
+    while(1){
+
+        
+
+    }
     
 }
 
@@ -306,10 +357,6 @@ int main(int argc, char* argv[]) {
 
     chat_with_server(client_fd);
     close(client_fd);
-
-
-    // Juego de battleShip
-
 
     return 0;
 }
