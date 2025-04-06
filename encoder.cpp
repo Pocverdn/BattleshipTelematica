@@ -219,6 +219,7 @@ int main(int argc, char* argv[]) {
 
 	initializeBoard(board1);
 	setShips(board1, ships, 1);
+	showBoard(board1);
 	//decode(encode(navy));
 	struct ship* navy = decode(encode(ships));
 	for (int i = 0; i < 9; ++i) {
