@@ -122,7 +122,7 @@ void setShips(char board[10][10],struct ship ships[9], string username) {
 
             s.posX = x;
             s.posY = y;
-            s.size = size;
+            s.size = sizes[i];
             s.dir = dir;
 
             bool cabe = (s.dir == 0 && ((s.posX + s.size) <= 10)) || (s.dir == 1 && ((s.posY + s.size) <= 10));
