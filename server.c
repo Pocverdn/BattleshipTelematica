@@ -11,7 +11,7 @@
 //#define PORT 8080
 
 //14 bytes para envio de posiciones de barcos - 1 byte para comfirmación de disparo
-#define BUFFER_SIZE 14
+#define BUFFER_SIZE 32
 #define BUFFER_SIZE_Confirm 1
 
 // Maximo de secciones
@@ -80,6 +80,15 @@ extern inline struct ship* decode(unsigned char arr[]) {
 unsigned char* encode(ship arr[]) {
     static unsigned char encoded[14] = { 0 };
     unsigned char bPos = 0;
+
+    for (int i = 0; i < 9; ++i) {
+        printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
+               i + 1,
+               arr[i].posX,
+               arr[i].posY,
+               arr[i].size,
+               arr[i].dir ? "Vertical" : "Horizontal");   
+    }
 
     for (char i = 0; i < 9; i++) {
         encoded[bPos / 8] |= (arr[i].posX << (bPos % 8));
@@ -237,11 +246,14 @@ int receive_encoded_ships(int client_fd, ship ships[]) {
     unsigned char buffer[BUFFER_SIZE];
     int bytes = read(client_fd, buffer, BUFFER_SIZE);
     printf("bytes: %d\n", bytes);
+    /*
     if (bytes != BUFFER_SIZE) {
         perror("Error leyendo buffer codificado");
         return -1;
     }
 
+    */
+    
     struct ship *decoded = decode(buffer);
     memcpy(ships, decoded, sizeof(struct ship) * TOTAL_SHIPS);
     return 0;
@@ -249,13 +261,13 @@ int receive_encoded_ships(int client_fd, ship ships[]) {
 
 int send_encoded_ships(int client_fd, ship ships[]) {
     unsigned char *buffer = encode(ships);
-    int sent = write(client_fd, buffer, 14);
+    int sent = send(client_fd, buffer, strlen(buffer), 0);
     printf("Sent: %d\n", sent);
-    if (sent != 14) {
-        perror("Error enviando barcos codificados");
+    if (sent == -1) {
+        perror("Error enviando barco codificado");
         return -1;
     }
-    return 0;
+    printf("Sent: %d\n", sent);
 }
 
 void *handle_games(void *client_socket){
@@ -294,6 +306,13 @@ void *handle_games(void *client_socket){
         strncpy(session->player1_name, username, sizeof(session->player1_name));
         memcpy(session->ships1, player_ships, sizeof(ship) * TOTAL_SHIPS);
 
+    } else {
+        
+        session->player2_fd = new_socket;
+        strncpy(session->player2_name, username, sizeof(session->player2_name));
+        memcpy(session->ships2, player_ships, sizeof(ship) * TOTAL_SHIPS);
+
+        /*
         for (int i = 0; i < 9; ++i) {
             printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
                    i + 1,
@@ -303,15 +322,21 @@ void *handle_games(void *client_socket){
                    session->ships1[i].dir ? "Vertical" : "Horizontal");   
         }
 
-    } else {
-        
-        session->player2_fd = new_socket;
-        strncpy(session->player2_name, username, sizeof(session->player2_name));
-        memcpy(session->ships2, player_ships, sizeof(ship) * TOTAL_SHIPS);
+        printf("-------------------------------------------------------------------------------------\n");
+
+        for (int i = 0; i < 9; ++i) {
+            printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
+                   i + 1,
+                   session->ships2[i].posX,
+                   session->ships2[i].posY,
+                   session->ships2[i].size,
+                   session->ships2[i].dir ? "Vertical" : "Horizontal");   
+        }
+        */
 
         
         send_encoded_ships(session->player1_fd, session->ships2);
-        send_encoded_ships(session->player2_fd, session->ships1);
+        send_encoded_ships(session->player2_fd, session->ships2);
 
         
         current_session++;
