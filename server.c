@@ -37,10 +37,10 @@ typedef struct ship {
     unsigned char hp;
 } ship;
 
-struct attack {
+typedef struct {
     unsigned char posX;  // 4 bits
     unsigned char posY;  // 4 bits
-};
+} attack;
 
 typedef struct {
     int player1_fd;
@@ -400,20 +400,56 @@ void *handle_games(void *client_socket){
 
         printf("\n---- ¡Comienza el juego! ----\n");
         bool turn = true;
+        attack att;
 
         while (hits1 < totalHitsNeeded && hits2 < totalHitsNeeded) {
             if (turn) {
+                send(session->player1_fd, "Tu turno", strlen("Tu turno") + 1, 0);
+                
+                int bytes_received = recv(session->player1_fd, &att, sizeof(att), 0);
+                if (bytes_received <= 0) {
+                    printf("Error al recibir ataque de jugador 1\n");
+                    break;
+                }
+                printf("Jugador 1 ataca: x = %d, y = %d\n", att.posX, att.posY);
+                if (shoot(board2, att.posX, att.posY)) {
+                    hits1++;
+                    send(session->player1_fd, "Acierto", strlen("Acierto") + 1, 0);
+                }else {
+                    send(session->player1_fd, "Agua", strlen("Agua") + 1, 0);
+                }
+                
 
             } else {
+                send(session->player2_fd, "Tu turno", strlen("Tu turno") + 1, 0);
+
+                int bytes_received = recv(session->player2_fd, &att, sizeof(att), 0);
+                if (bytes_received <= 0) {
+                    printf("Error al recibir ataque de jugador 2\n");
+                    break;
+                }
+
+                printf("Jugador 2 ataca: x = %d, y = %d\n", att.posX, att.posY);
+
+                if (shoot(board1, att.posX, att.posY)) {
+                    hits2++;
+                    send(session->player2_fd, "Acierto", strlen("Acierto") + 1, 0);
+                }else {
+                    send(session->player2_fd, "Agua", strlen("Agua") + 1, 0);
+                }
+                
 
             }
             turn = !turn;
         }
 
-
-        send(session->player1_fd, hello, strlen(hello), 0);
-        send(session->player2_fd, hello, strlen(hello), 0);
-
+        if (hits1 >= totalHitsNeeded) {
+            send(session->player1_fd, "¡Ganaste!", 9, 0);
+            send(session->player2_fd, "Perdiste", 8, 0);
+        } else {
+            send(session->player2_fd, "¡Ganaste!", 9, 0);
+            send(session->player1_fd, "Perdiste", 8, 0);
+        }
         
         current_session++;
         if (current_session >= MAX_SESSIONS) {
