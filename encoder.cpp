@@ -1,12 +1,20 @@
 #include <stdbool.h>
 #include <stdio.h>
-//#include <stdlib.h>
+#include <stdlib.h>
+//#ifdef _WIN32
+#include <time.h>
+#include <iostream>
+/*#else
+#include <sys/time.h>
+#endif*/
+using namespace std;
 
 struct ship {
 	unsigned char  posX;//4 bits
 	unsigned char  posY;//4 bits
 	unsigned char  size;//3 bits
 	bool dir;
+	unsigned char hp = 0;
 };
 
 struct attack {
@@ -15,6 +23,90 @@ struct attack {
 };
 
 //Siempre son 12 barcos.
+void initializeBoard(char board[10][10]) {
+	for (int i = 0; i < 10; i++) {
+		for (int j = 0; j < 10; j++) {
+			board[i][j] = '~'; // signo para el agua no revelada
+		}
+	}
+}
+
+bool placeShipSize(char board[10][10],struct ship s) {
+	for (int i = 0; i < s.size; ++i) {
+		int x = s.posX + (s.dir ? i : 0);
+		int y = s.posY + (s.dir ? 0 : i);
+
+		if (x >= 10 || y >= 10 || board[x][y] != '~') {
+			return false; // fuera del tablero o espacio ocupado
+		}
+	}
+
+	for (int i = 0; i < s.size; ++i) {
+		int x = s.posX + (s.dir ? i : 0);
+		int y = s.posY + (s.dir ? 0 : i);
+		board[x][y] = 'B';
+	}
+
+	return true;
+}
+
+
+
+void setShips(char board[10][10],struct ship ships[9], int playerNumber) {
+	cout << "\nJugador " << playerNumber << ", quieres colocar tus barcos (1 para sí o 0 para no)?\n";
+	bool randp;
+	cin >> randp;
+	char sizes[9] = { 1,1,1,2,2,3,3,4,5 };
+		for (int i = 0; i < 9; ++i) {
+		struct ship s;
+		bool put = false;
+			do {
+				int x, y, size;
+				int dir;
+				if (randp) {
+					cout << "Barco #" << i + 1 << " - Ingresa X Y Tamano Direccion(H=0/V=1): ";
+					cin >> x >> y >> dir;
+				}
+				else {
+					x = rand() % 10;
+					y = rand() % 10;
+					dir = rand() % 1;
+				}
+
+				s.posX = x;
+				s.posY = y;
+				s.size = sizes[i];
+				s.dir = dir;
+
+				bool cabe = (s.dir == 0 && ((s.posX + s.size) <= 10)) || (s.dir == 1 && ((s.posY + s.size) <= 10));
+
+				if (placeShipSize(board, s) && cabe) {
+					ships[i] = s;
+					put = true;
+				}
+				else {
+					cout << "Posicion inválida. Intenta de nuevo.\n";
+				}
+	
+			} while (!put);
+		}
+}
+
+void showBoard(char board[10][10]) {
+	cout << "  ";
+	for (int j = 0; j < 10; ++j) cout << j << " ";
+	cout << endl;
+	for (int i = 0; i < 10; ++i) {
+		cout << i << " ";
+		for (int j = 0; j < 10; ++j) {
+			if (board[i][j] == 'X' || board[i][j] == 'O')
+				cout << board[i][j] << " ";
+			else
+				cout << "~ ";
+		}
+		cout << endl;
+	}
+}
 
 extern inline struct ship* inputShips() {
 	static struct ship ship[9] = { 0 };
@@ -113,9 +205,20 @@ struct attack decodeAttack(unsigned char A) {
 
 //El main es solo para pruebas, lo quitamos despues.
 int main(int argc, char* argv[]) {
-	struct ship* navy = inputShips();
+
+	time_t tiempo;
+	time(&tiempo);
+	printf("%d", tiempo);
+	srand(tiempo);
+	printf("\n%d", rand());
+	//struct ship* navy = inputShips();
+	char board1[10][10];
+	struct ship ships[9];
+
+	initializeBoard(board1);
+	setShips(board1, ships, 1);
 	//decode(encode(navy));
-	navy = decode(encode(navy));
+	struct ship* navy = decode(encode(ships));
 	for (int i = 0; i < 9; ++i) {
 		printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
 			i + 1,
