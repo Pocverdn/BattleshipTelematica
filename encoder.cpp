@@ -101,10 +101,7 @@ void showBoard(char board[10][10]) {
 	for (int i = 0; i < 10; ++i) {
 		cout << i << " ";
 		for (int j = 0; j < 10; ++j) {
-			if (board[i][j] == 'X' || board[i][j] == 'O')
-				cout << board[i][j] << " ";
-			else
-				cout << "~ ";
+			cout << board[i][j] << " ";
 		}
 		cout << endl;
 	}
