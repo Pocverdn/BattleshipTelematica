@@ -6,7 +6,7 @@
 #include <arpa/inet.h>
 #include <unistd.h> 
 #include <pthread.h>
-
+#include <time.h>
 // Puerto
 //#define PORT 8080
 
@@ -81,15 +81,6 @@ unsigned char* encode(ship arr[]) {
     static unsigned char encoded[14] = { 0 };
     unsigned char bPos = 0;
 
-    for (int i = 0; i < 9; ++i) {
-        printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
-               i + 1,
-               arr[i].posX,
-               arr[i].posY,
-               arr[i].size,
-               arr[i].dir ? "Vertical" : "Horizontal");   
-    }
-
     for (char i = 0; i < 9; i++) {
         encoded[bPos / 8] |= (arr[i].posX << (bPos % 8));
         bPos += 4;
@@ -103,6 +94,24 @@ unsigned char* encode(ship arr[]) {
 
     printf("El primer byte de la cadena codificada: %02X\n", encoded[0]);
     return encoded;
+}
+unsigned char* encode2(ship arr[]) {
+    static unsigned char encodeds[14] = { 0 };
+    unsigned char bPos = 0;
+
+    for (char i = 0; i < 9; i++) {
+        encodeds[bPos / 8] |= (arr[i].posX << (bPos % 8));
+        bPos += 4;
+        encodeds[bPos / 8] |= (arr[i].posY << (bPos % 8));
+        bPos += 4;
+        encodeds[bPos / 8] |= (arr[i].size << (bPos % 8));
+        bPos += 3;
+        encodeds[bPos / 8] |= (arr[i].dir << (bPos % 8));
+        bPos += 1;
+    }
+
+    printf("El primer byte de la cadena codificada: %02X\n", encodeds[0]);
+    return encodeds;
 }
 
 void initializeBoard(char board[SIZE][SIZE]) {
@@ -246,14 +255,11 @@ int receive_encoded_ships(int client_fd, ship ships[]) {
     unsigned char buffer[BUFFER_SIZE];
     int bytes = read(client_fd, buffer, BUFFER_SIZE);
     printf("bytes: %d\n", bytes);
-    /*
     if (bytes != BUFFER_SIZE) {
         perror("Error leyendo buffer codificado");
         return -1;
     }
 
-    */
-    
     struct ship *decoded = decode(buffer);
     memcpy(ships, decoded, sizeof(struct ship) * TOTAL_SHIPS);
     return 0;
@@ -261,29 +267,61 @@ int receive_encoded_ships(int client_fd, ship ships[]) {
 
 int send_encoded_ships(int client_fd, ship ships[]) {
     unsigned char *buffer = encode(ships);
-    int sent = send(client_fd, buffer, strlen(buffer), 0);
+    int sent = write(client_fd, buffer, 14);
     printf("Sent: %d\n", sent);
-    if (sent == -1) {
-        perror("Error enviando barco codificado");
+    if (sent != 14) {
+        perror("Error enviando barcos codificados");
         return -1;
     }
+    return 0;
+}
+int send_encoded_ships2(int client_fd, ship ships[]) {
+    unsigned char *buffer = encode2(ships);
+    int sent = write(client_fd, buffer, 14);
     printf("Sent: %d\n", sent);
+    if (sent != 14) {
+        perror("Error enviando barcos codificados");
+        return -1;
+    }
+    return 0;
 }
 
 void *handle_games(void *client_socket){
+    
+    time_t now = time(NULL);
+    struct tm* t = localtime(&now);
+
+    FILE* log_file = fopen("log.log", "a");
+    if (!log_file) {
+        perror("Failed to open log file");
+        return;
+    }
 
     int new_socket = *(int *)client_socket;
     free(client_socket);
 
     ship player_ships[TOTAL_SHIPS];
     char username[50] = {0};
+    char email[50] = {0};
 
     const char *hello = "Message received";
 
     int bytes_received = recv(new_socket, username, sizeof(username) - 1, 0);
-    if (bytes_received > 0) {
+    int bytes_receivede = recv(new_socket, email, sizeof(email) - 1, 0);
+    if (bytes_received>0) {
         username[bytes_received] = '\0';
+        email[bytes_receivede] = '\0';
         printf("Usuario conectado: %s\n", username);
+        printf("Email conectado: %s\n", email);
+        fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] Usuario conectado: %s | Email: %s\n",
+            t->tm_year + 1900,
+            t->tm_mon + 1,
+            t->tm_mday,
+            t->tm_hour,
+            t->tm_min,
+            t->tm_sec,
+            username,
+            email);
     } else {
         printf("No se recibió nombre de usuario\n");
         close(new_socket);
@@ -306,13 +344,6 @@ void *handle_games(void *client_socket){
         strncpy(session->player1_name, username, sizeof(session->player1_name));
         memcpy(session->ships1, player_ships, sizeof(ship) * TOTAL_SHIPS);
 
-    } else {
-        
-        session->player2_fd = new_socket;
-        strncpy(session->player2_name, username, sizeof(session->player2_name));
-        memcpy(session->ships2, player_ships, sizeof(ship) * TOTAL_SHIPS);
-
-        /*
         for (int i = 0; i < 9; ++i) {
             printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
                    i + 1,
@@ -322,21 +353,30 @@ void *handle_games(void *client_socket){
                    session->ships1[i].dir ? "Vertical" : "Horizontal");   
         }
 
-        printf("-------------------------------------------------------------------------------------\n");
-
+    } else {
         for (int i = 0; i < 9; ++i) {
-            printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
-                   i + 1,
-                   session->ships2[i].posX,
-                   session->ships2[i].posY,
-                   session->ships2[i].size,
-                   session->ships2[i].dir ? "Vertical" : "Horizontal");   
+            fprintf(log_file, "  Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
+                    i + 1,
+                    session->ships1[i].posX,
+                    session->ships1[i].posY,
+                    session->ships1[i].size,
+                    session->ships1[i].dir ? "Vertical" : "Horizontal");
         }
-        */
-
+        for (int i = 0; i < 9; ++i) {
+            fprintf(log_file, "  Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
+                    i + 1,
+                    session->ships2[i].posX,
+                    session->ships2[i].posY,
+                    session->ships2[i].size,
+                    session->ships2[i].dir ? "Vertical" : "Horizontal");
+        }
+        session->player2_fd = new_socket;
+        strncpy(session->player2_name, username, sizeof(session->player2_name));
+        memcpy(session->ships2, player_ships, sizeof(ship) * TOTAL_SHIPS);
         
         send_encoded_ships(session->player1_fd, session->ships2);
-        send_encoded_ships(session->player2_fd, session->ships2);
+
+        send_encoded_ships2(session->player2_fd, session->ships1);
 
         
         current_session++;

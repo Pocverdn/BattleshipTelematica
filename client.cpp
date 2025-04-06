@@ -98,35 +98,44 @@ bool placeShipSize(char board[SIZE][SIZE], ship s) {
     return true;
 }
 
-void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], int playerNumber) {
-    cout << "\nJugador " << playerNumber << ", coloca tus " << TOTAL_SHIPS << " barcos.\n";
-    for (int i = 0; i < TOTAL_SHIPS; ++i) {
-        ship s;
-        bool put = false;
-        do {
-            int x, y, size;
-            int dir;
-            cout << "Barco #" << i+1 << " - Ingresa X Y Tamano Direccion(H=0/V=1): ";
-            cin >> x >> y >> size >> dir;
+void setShips(char board[10][10],struct ship ships[9], int playerNumber) {
+	cout << "\nJugador " << playerNumber << ", quieres colocar tus barcos (1 para sí o 0 para no)?\n";
+	bool randp;
+	cin >> randp;
+	char sizes[9] = { 1,1,1,2,2,3,3,4,5 };
+		for (int i = 0; i < 9; ++i) {
+		struct ship s;
+		bool put = false;
+			do {
+				int x, y, size;
+				int dir;
+				if (randp) {
+					cout << "Barco #" << i + 1 << " - Ingresa X Y Tamano Direccion(H=0/V=1): ";
+					cin >> x >> y >> dir;
+				}
+				else {
+					x = rand() % 10;
+					y = rand() % 10;
+					dir = rand() % 1;
+				}
 
-            s.posX = x;
-            s.posY = y;
-            s.size = size;
-            s.dir = dir;
+				s.posX = x;
+				s.posY = y;
+				s.size = sizes[i];
+				s.dir = dir;
 
-            bool cabe = (s.dir == 0 && ((s.posX + s.size) <= SIZE)) || (s.dir == 1 && ((s.posY + s.size) <= SIZE));
+				bool cabe = (s.dir == 0 && ((s.posX + s.size) <= 10)) || (s.dir == 1 && ((s.posY + s.size) <= 10));
 
-
-            if (placeShipSize(board, s) && cabe) {
-                ships[i] = s;
-                put = true;
-            
-            }else {
-                cout << "Posicion inválida. Intenta de nuevo.\n";
-            }   
-
-        } while(!put);
-    }
+				if (placeShipSize(board, s) && cabe) {
+					ships[i] = s;
+					put = true;
+				}
+				else {
+					cout << "Posicion inválida. Intenta de nuevo.\n";
+				}
+	
+			} while (!put);
+		}
 }
 
 void showBoard(char board[SIZE][SIZE]){
@@ -257,12 +266,14 @@ std::string serializeShips(ship ships[], int total) {
 void chat_with_server(int client_fd) {
     char buffer[BUFFER_SIZE] = {0};
     std::string username;
+    std::string email;
 
     std::cout << "Enter your username: ";
     std::getline(std::cin >> std::ws, username);
-
+    std::cout << "Enter your email: ";
+    std::getline(std::cin >> std::ws, email);
     send(client_fd, username.c_str(), username.length(), 0);
-
+    send(client_fd, email.c_str(), email.length(), 0);
     char board1[SIZE][SIZE];
     ship ships1[TOTAL_SHIPS];
 

@@ -193,7 +193,7 @@ extern inline void chat_with_server(int client_fd) {
         
         send(client_fd, formatted_msg, strlen(formatted_msg), 0);
         //printf("Message sent\n");
-
+        
         int valread = read(client_fd, buffer, BUFFER_SIZE - 1); // Se recibe el mensaje
         if (valread > 0) {
             buffer[valread] = '\0'; // Se verifica que el mensaje sea un string

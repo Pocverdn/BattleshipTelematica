@@ -1,5 +1,4 @@
 *.tlog
-*.log
 *.opendb
 .vs/Battleship/v16/.suo
 *.db
