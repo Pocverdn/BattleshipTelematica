@@ -297,6 +297,69 @@ std::string serializeShips(ship ships[], int total) {
     return result;
 }
 
+void game(int sock, char board[SIZE][SIZE], char enemyBoard[SIZE][SIZE], int totalH) {
+    attack att;
+    char buffer[32];
+    int totalHits = 0;
+    int totalHitsNeeded = totalH;
+
+    while (true) {
+        memset(buffer, 0, sizeof(buffer));
+        int received = recv(sock, buffer, sizeof(buffer), 0);
+        if (received <= 0) {
+            cerr << "Conexión cerrada o error.\n";
+            break;
+        }
+
+        string msg(buffer);
+        trim(msg);
+
+        if (msg == "Tu turno") {
+            cout << "\n>>> Es tu turno de atacar.\n";
+
+            int x, y;
+            do {
+                cout << "Ingresa coordenadas X Y: ";
+                cin >> x >> y;
+            } while (x < 0 || x >= SIZE || y < 0 || y >= SIZE);
+
+            att.posX = x;
+            att.posY = y;
+
+            send(sock, &att, sizeof(att), 0);
+
+            memset(buffer, 0, sizeof(buffer));
+            int result = recv(sock, buffer, sizeof(buffer), 0);
+            if (result <= 0) {
+                cerr << "Conexión cerrada o error al recibir resultado del disparo.\n";
+                break;
+            }
+
+            trim(msg = string(buffer));
+            if (msg == "Acierto") {
+                enemyBoard[x][y] = 'X';
+                cout << "¡Acierto!\n";
+                totalHits++;
+            } else if (msg == "Agua") {
+                enemyBoard[x][y] = 'O';
+                cout << "¡Agua!\n";
+            }
+
+        } else if (msg == "¡Ganaste!") {
+            cout << "\n🎉 ¡Has ganado la partida!\n";
+            break;
+        } else if (msg == "Perdiste") {
+            cout << "\n😢 Has perdido la partida.\n";
+            break;
+        } else {
+            cout << "\nEsperando al otro jugador...\n";
+        }
+
+        showBoard(board, nullptr, enemyBoard);
+    }
+
+}
+
 void chat_with_server(int client_fd) {
     char buffer[BUFFER_SIZE] = {0};
     std::string username;
@@ -316,10 +379,16 @@ void chat_with_server(int client_fd) {
     initializeBoard(board2);
     setShips(board1, ships1, username);
     showBoard(board1, ships1, board2);
-    
+
+    int totalHitsNeeded = countShips(ships1);
+
     unsigned char* serialized = encode(ships1);
     send(client_fd, serialized, 14, 0);
 
+    game(client_fd, board1, board2, totalHitsNeeded);
+
+
+    /*
     int bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
     if (bytes_received > 0) {
         std::cout << "Recibiendo barcos del oponente...\n";
@@ -336,13 +405,10 @@ void chat_with_server(int client_fd) {
     } else {
         std::cerr << "Error al recibir los barcos del servidor.\n";
     }
+    */
 
-    while(1){
-
-        
-
-    }
     
+
 }
 
 inline void randSeed() {
