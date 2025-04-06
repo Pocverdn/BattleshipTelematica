@@ -96,24 +96,6 @@ unsigned char* encode(ship arr[]) {
     printf("El primer byte de la cadena codificada: %02X\n", encoded[0]);
     return encoded;
 }
-unsigned char* encode2(ship arr[]) {
-    static unsigned char encodeds[14] = { 0 };
-    unsigned char bPos = 0;
-
-    for (char i = 0; i < 9; i++) {
-        encodeds[bPos / 8] |= (arr[i].posX << (bPos % 8));
-        bPos += 4;
-        encodeds[bPos / 8] |= (arr[i].posY << (bPos % 8));
-        bPos += 4;
-        encodeds[bPos / 8] |= (arr[i].size << (bPos % 8));
-        bPos += 3;
-        encodeds[bPos / 8] |= (arr[i].dir << (bPos % 8));
-        bPos += 1;
-    }
-
-    printf("El primer byte de la cadena codificada: %02X\n", encodeds[0]);
-    return encodeds;
-}
 
 void initializeBoard(char board[SIZE][SIZE]) {
     for(int i = 0; i < SIZE; i++){
@@ -276,15 +258,19 @@ int send_encoded_ships(int client_fd, ship ships[]) {
     }
     return 0;
 }
-int send_encoded_ships2(int client_fd, ship ships[]) {
-    unsigned char *buffer = encode2(ships);
-    int sent = write(client_fd, buffer, 14);
-    printf("Sent: %d\n", sent);
-    if (sent != 14) {
-        perror("Error enviando barcos codificados");
-        return -1;
-    }
-    return 0;
+
+attack decodeAttack(unsigned char A) {
+	attack decoded;
+
+
+	decoded.posX = A & 0xF;
+	decoded.posY = (A & 0xF0) >> 4;
+
+	printf("La posX del ataque: ");
+	printf("%x", decoded.posX);
+	printf("\n");
+	printf("La posY del ataque: ");
+	return decoded;
 }
 
 void *handle_games(void *client_socket){
@@ -395,18 +381,25 @@ void *handle_games(void *client_socket){
 
         printf("\n---- ¡Comienza el juego! ----\n");
         bool turn = true;
-        attack att;
+        unsigned char at;
 
         while (hits1 < totalHitsNeeded && hits2 < totalHitsNeeded) {
             printf("\nNuevo turno\n");
             if (turn) {
                 send(session->player1_fd, "Tu turno", strlen("Tu turno") + 1, 0);
+
                 
-                int bytes_received = recv(session->player1_fd, &att, sizeof(att), 0);
+                
+                int bytes_received = recv(session->player1_fd, &at, sizeof(at), 0);
+
+                
                 if (bytes_received <= 0) {
                     printf("Error al recibir ataque de jugador 1\n");
                     break;
                 }
+
+                attack att = decodeAttack(at);
+
                 printf("Jugador 1 ataca: x = %d, y = %d\n", att.posX, att.posY);
                 if (shoot(board2, att.posX, att.posY)) {
                     hits1++;
@@ -419,11 +412,15 @@ void *handle_games(void *client_socket){
             } else {
                 send(session->player2_fd, "Tu turno", strlen("Tu turno") + 1, 0);
 
-                int bytes_received = recv(session->player2_fd, &att, sizeof(att), 0);
+                int bytes_received = recv(session->player2_fd, &at, sizeof(at), 0);
+
+                
                 if (bytes_received <= 0) {
                     printf("Error al recibir ataque de jugador 2\n");
                     break;
                 }
+
+                attack att = decodeAttack(at);
 
                 printf("Jugador 2 ataca: x = %d, y = %d\n", att.posX, att.posY);
 

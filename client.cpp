@@ -73,6 +73,19 @@ ship* decode(const unsigned char arr[]) {
     return decoded;
 }
 
+unsigned char encodeAttack(struct attack A) {
+	unsigned char encoded;
+
+
+	encoded =  A.posX;
+	encoded = encoded | (A.posY << 4);
+
+	printf("El byte del ataque: ");
+	printf("%x", encoded);
+	printf("\n");
+	return encoded;
+}
+
 void initializeBoard(char board[SIZE][SIZE]){
     for(int i = 0; i < SIZE; i++){
         for (int j = 0; j < SIZE; j++){
@@ -99,50 +112,6 @@ bool placeShipSize(char board[SIZE][SIZE], ship s) {
 
     return true;
 }
-
-
-/*
-void setShips(char board[10][10],struct ship ships[9], string username) {
-	cout << "\nJugador " << username << ", quieres colocar tus barcos (1 para sí o 0 para no)?\n";
-	bool randp;
-	cin >> randp;
-	char sizes[9] = { 1,1,1,2,2,3,3,4,5 };
-    for (int i = 0; i < 9; ++i) {
-    struct ship s;
-    bool put = false;
-        do {
-            int x, y, size;
-            int dir;
-            if (randp) {
-                cout << "Barco #" << i + 1 << " - Ingresa X Y Tamano Direccion(H=0/V=1): ";
-                cin >> x >> y >> dir;
-            }
-            else {
-                x = rand() % 10;
-                y = rand() % 10;
-                dir = rand() % 1;
-            }
-
-            s.posX = x;
-            s.posY = y;
-            s.size = sizes[i];
-            s.dir = dir;
-
-            bool cabe = (s.dir == 0 && ((s.posX + s.size) <= 10)) || (s.dir == 1 && ((s.posY + s.size) <= 10));
-
-            if (placeShipSize(board, s) && cabe) {
-                ships[i] = s;
-                put = true;
-            }
-            else if (randp) {
-				cout << "Posicion inválida. Intenta de nuevo.\n";
-			}
-
-        } while (!put);
-    }
-}
-*/
-
 
 void setShips(char board[10][10],struct ship ships[9], string username) {
 	cout << "\nJugador " << username << ", quieres colocar tus barcos (1 para sí o 0 para no)?\n";
@@ -365,14 +334,16 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             int x, y;
             do {
-                cout << "Ingresa coordenadas X Y: ";
+                cout << "Ingresa coordenadas Y X: ";
                 cin >> x >> y;
             } while (x < 0 || x >= SIZE || y < 0 || y >= SIZE);
 
             att.posX = x;
             att.posY = y;
 
-            send(sock, &att, sizeof(att), 0);
+            unsigned char serialized = encodeAttack(att);
+
+            send(sock, &serialized, sizeof(serialized), 0);
 
             memset(buffer, 0, sizeof(buffer));
             int result = recv(sock, buffer, sizeof(buffer), 0);
@@ -470,7 +441,7 @@ int main(int argc, char* argv[]) {
     // Conexiones de cliente a soket
     randSeed();
     Config config;
-    parse_config("adress.config", config.server_ip, &config.PORTLINUX);
+    parse_config("address.config", config.server_ip, &config.PORTLINUX);
 
     std::cout << "Server IP: " << config.server_ip << std::endl;
     std::cout << "Port: " << config.PORTLINUX << std::endl;
