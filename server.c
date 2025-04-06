@@ -329,7 +329,7 @@ void *handle_games(void *client_socket){
     FILE* log_file = fopen("log.log", "a");
     if (!log_file) {
         perror("Failed to open log file");
-        return;
+        return 0;
     }
 
     int new_socket = *(int *)client_socket;
@@ -393,12 +393,12 @@ void *handle_games(void *client_socket){
         showBoard(board1, session->ships1);
         showBoard(board2, session->ships2);
 
-        int hits1 = 0,
-        int hits2 = 0,
+        int hits1 = 0;
+        int hits2 = 0;
 
         int totalHitsNeeded = countShips(session->ships1);
 
-        cout << "\n---- ¡Comienza el juego! ----\n";
+        printf("\n---- ¡Comienza el juego! ----\n");
         bool turn = true;
 
         while (hits1 < totalHitsNeeded && hits2 < totalHitsNeeded) {
