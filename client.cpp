@@ -122,7 +122,7 @@ void setShips(char board[10][10],struct ship ships[9], string username) {
 
             s.posX = x;
             s.posY = y;
-            s.size = sizes[i];
+            s.size = size;
             s.dir = dir;
 
             bool cabe = (s.dir == 0 && ((s.posX + s.size) <= 10)) || (s.dir == 1 && ((s.posY + s.size) <= 10));
@@ -299,12 +299,14 @@ std::string serializeShips(ship ships[], int total) {
 void chat_with_server(int client_fd) {
     char buffer[BUFFER_SIZE] = {0};
     std::string username;
+    std::string email;
 
     std::cout << "Enter your username: ";
     std::getline(std::cin >> std::ws, username);
-
+    std::cout << "Enter your email: ";
+    std::getline(std::cin >> std::ws, email);
     send(client_fd, username.c_str(), username.length(), 0);
-
+    send(client_fd, email.c_str(), email.length(), 0);
     char board1[SIZE][SIZE];
     char board2[SIZE][SIZE];
     ship ships1[TOTAL_SHIPS];
