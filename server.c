@@ -378,12 +378,36 @@ void *handle_games(void *client_socket){
         strncpy(session->player1_name, username, sizeof(session->player1_name));
         memcpy(session->ships1, player_ships, sizeof(ship) * TOTAL_SHIPS);
 
+        for (int i = 0; i < 9; ++i) {
+            printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
+                   i + 1,
+                   session->ships1[i].posX,
+                   session->ships1[i].posY,
+                   session->ships1[i].size,
+                   session->ships1[i].dir ? "Vertical" : "Horizontal");   
+        }
+
     } else {
-        
+        for (int i = 0; i < 9; ++i) {
+            fprintf(log_file, "  Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
+                    i + 1,
+                    session->ships1[i].posX,
+                    session->ships1[i].posY,
+                    session->ships1[i].size,
+                    session->ships1[i].dir ? "Vertical" : "Horizontal");
+        }
+        for (int i = 0; i < 9; ++i) {
+            fprintf(log_file, "  Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
+                    i + 1,
+                    session->ships2[i].posX,
+                    session->ships2[i].posY,
+                    session->ships2[i].size,
+                    session->ships2[i].dir ? "Vertical" : "Horizontal");
+        }
         session->player2_fd = new_socket;
         strncpy(session->player2_name, username, sizeof(session->player2_name));
         memcpy(session->ships2, player_ships, sizeof(ship) * TOTAL_SHIPS);
-
+        
         char board1[SIZE][SIZE];
         char board2[SIZE][SIZE];
 
@@ -459,6 +483,7 @@ void *handle_games(void *client_socket){
     
     pthread_mutex_unlock(&session_mutex);
     
+
     return NULL;
 
 }
