@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <arpa/inet.h>
+#include <time.h>
 
 using namespace std;
 
@@ -344,10 +345,18 @@ void chat_with_server(int client_fd) {
     
 }
 
+inline void randSeed() {
+    time_t tiempo;
+    time(&tiempo);
+    //printf("%d", tiempo);
+    srand(tiempo);
+    //printf("\n%d", rand());
+}
+
 int main(int argc, char* argv[]) {
 
     // Conexiones de cliente a soket
-
+    randSeed();
     Config config;
     parse_config("adress.config", config.server_ip, &config.PORTLINUX);
 

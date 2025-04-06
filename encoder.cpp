@@ -80,7 +80,7 @@ void setShips(char board[10][10],struct ship ships[9], int playerNumber) {
 
 			bool cabe = (s.dir == 0 && ((s.posX + s.size) <= 10)) || (s.dir == 1 && ((s.posY + s.size) <= 10));
 
-<<<<<<< HEAD
+
 			if (placeShipSize(board, s) && cabe) {
 				ships[i] = s;
 				put = true;
@@ -91,18 +91,7 @@ void setShips(char board[10][10],struct ship ships[9], int playerNumber) {
 
 		} while (!put);
 	}
-=======
-				if (placeShipSize(board, s) && cabe) {
-					ships[i] = s;
-					put = true;
-				}
-				else if (randp) 
-					cout << "Posicion inválida. Intenta de nuevo.\n";
-				
-	
-			} while (!put);
-		}
->>>>>>> 995b45f5656d7c643362b36f97fa9bc1b071b057
+
 }
 
 void showBoard(char board[10][10]) {
