@@ -86,6 +86,20 @@ unsigned char encodeAttack(struct attack A) {
 	return encoded;
 }
 
+struct attack decodeAttack(unsigned char A) {
+	struct attack decoded;
+
+
+	decoded.posX = A & 0xF;
+	decoded.posY = (A & 0xF0) >> 4;
+
+	//printf("La posX del ataque: ");
+	//printf("%x", decoded.posX);
+	//printf("\n");
+	//printf("La posY del ataque: ");
+	return decoded;
+}
+
 void initializeBoard(char board[SIZE][SIZE]){
     for(int i = 0; i < SIZE; i++){
         for (int j = 0; j < SIZE; j++){
@@ -173,7 +187,7 @@ void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char secondBoard
                     int x = s.posX + (s.dir ? l : 0);
                     int y = s.posY + (s.dir ? 0 : l);
 
-                    if (x == i && y == j) {
+                    if (x == i && y == j && board[x][y] != 'X') {
                         isShip = true;
                         break;
                     }
@@ -329,7 +343,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
         string msg(buffer);
         trim(msg);
 
-        if (msg == "Tu turno") {
+        if (msg == "turn") {
             cout << "\n>>> Es tu turno de atacar.\n";
 
             int x, y;
@@ -362,14 +376,21 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
                 cout << "¡Agua!\n";
             }
 
-        } else if (msg == "¡Ganaste!") {
+        } else if(msg == "wait"){
+            cout << "\n Turno del enemigo \n";
+
+        } else if (msg.rfind("Impacto", 0) == 0) {
+            int x, y;
+            sscanf(msg.c_str(), "Impacto %d %d", &x, &y);
+            board[x][y] = 'X';
+            cout << "\n💥 ¡Tu enemigo te ha dado en X: " << x << " Y: " << y << "\n";
+
+        }else if (msg == "¡Ganaste!") {
             cout << "\n🎉 ¡Has ganado la partida!\n";
             break;
         } else if (msg == "Perdiste") {
             cout << "\n😢 Has perdido la partida.\n";
             break;
-        } else {
-            cout << "\nEsperando al otro jugador...\n";
         }
 
         showBoard(board, ships, enemyBoard);
@@ -403,11 +424,6 @@ void chat_with_server(int client_fd) {
     send(client_fd, serialized, 14, 0);
 
     game(client_fd, board1, ships1, board2, totalHitsNeeded);
-
-
-
-
-    
 
 }
 

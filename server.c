@@ -393,13 +393,10 @@ void *handle_games(void *client_socket){
         while (hits1 < totalHitsNeeded && hits2 < totalHitsNeeded) {
             printf("\nNuevo turno\n");
             if (turn) {
-                send(session->player1_fd, "Tu turno", strlen("Tu turno") + 1, 0);
+                send(session->player1_fd, "turn", strlen("turn") + 1, 0);
+                send(session->player2_fd, "wait", strlen("wait") + 1, 0);
 
-                
-                
                 int bytes_received = recv(session->player1_fd, &at, sizeof(at), 0);
-
-                
                 if (bytes_received <= 0) {
                     printf("Error al recibir ataque de jugador 1\n");
                     break;
@@ -410,33 +407,41 @@ void *handle_games(void *client_socket){
                 printf("Jugador 1 ataca: x = %d, y = %d\n", att.posX, att.posY);
                 snprintf(log_msg, sizeof(log_msg),"Jugador 1 ataca: x = %d, y = %d\n", att.posX, att.posY);
                 safe_log(log_msg);
+
                 if (shoot(board2, att.posX, att.posY)) {
                     hits1++;
                     send(session->player1_fd, "Acierto", strlen("Acierto") + 1, 0);
+                    
+                    char impact_msg[32];
+                    snprintf(impact_msg, sizeof(impact_msg), "Impacto %d %d", att.posX, att.posY);
+                    send(session->player2_fd, impact_msg, strlen(impact_msg) + 1, 0);
+
+
                 }else {
                     send(session->player1_fd, "Agua", strlen("Agua") + 1, 0);
                 }
                 
 
             } else {
-                send(session->player2_fd, "Tu turno", strlen("Tu turno") + 1, 0);
+                send(session->player2_fd, "turn", strlen("turn") + 1, 0);
+                send(session->player1_fd, "wait", strlen("wait") + 1, 0);
 
                 int bytes_received = recv(session->player2_fd, &at, sizeof(at), 0);
-
-                
                 if (bytes_received <= 0) {
                     printf("Error al recibir ataque de jugador 2\n");
                     break;
                 }
 
                 attack att = decodeAttack(at);
+
                 snprintf(log_msg, sizeof(log_msg),"Jugador 2 ataca: x = %d, y = %d\n", att.posX, att.posY);
                 safe_log(log_msg);
                 printf("Jugador 2 ataca: x = %d, y = %d\n", att.posX, att.posY);
 
                 if (shoot(board1, att.posX, att.posY)) {
-                    hits2++;
-                    send(session->player2_fd, "Acierto", strlen("Acierto") + 1, 0);
+                    char impact_msg[32];
+                    snprintf(impact_msg, sizeof(impact_msg), "Impacto %d %d", att.posX, att.posY);
+                    send(session->player1_fd, impact_msg, strlen(impact_msg) + 1, 0);
                 }else {
                     send(session->player2_fd, "Agua", strlen("Agua") + 1, 0);
                 }
@@ -459,7 +464,7 @@ void *handle_games(void *client_socket){
             current_session = 0;
         }
     }
-    
+        
     pthread_mutex_unlock(&session_mutex);
     
     
