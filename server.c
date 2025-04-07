@@ -1,3 +1,6 @@
+#include <fcntl.h>     
+#include <sys/file.h>  
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -104,7 +107,44 @@ void initializeBoard(char board[SIZE][SIZE]) {
         }
     }
 }
+//
 
+void safe_log(const char* message) {
+    int fd = open("log.log", O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (fd == -1) {
+        perror("open");
+        return;
+    }
+
+    if (flock(fd, LOCK_EX) == -1) {
+        perror("flock");
+        close(fd);
+        return;
+    }
+
+    FILE* log_file = fdopen(fd, "a");
+    if (!log_file) {
+        perror("fdopen");
+        close(fd);
+        return;
+    }
+
+    time_t now = time(NULL);
+    struct tm* t = localtime(&now);
+    fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] %s\n",
+            t->tm_year + 1900,
+            t->tm_mon + 1,
+            t->tm_mday,
+            t->tm_hour,
+            t->tm_min,
+            t->tm_sec,
+            message);
+
+    fflush(log_file);  
+    flock(fd, LOCK_UN); 
+    fclose(log_file);  
+}
+//
 bool placeShipSize(char board[SIZE][SIZE], ship s) {
     for(int i = 0; i < s.size; ++i) {
         int x = s.posX + (s.dir ? i : 0);
@@ -274,23 +314,13 @@ attack decodeAttack(unsigned char A) {
 }
 
 void *handle_games(void *client_socket){
-    
-    time_t now = time(NULL);
-    struct tm* t = localtime(&now);
-
-    FILE* log_file = fopen("log.log", "a");
-    if (!log_file) {
-        perror("Failed to open log file");
-        return 0;
-    }
-
     int new_socket = *(int *)client_socket;
     free(client_socket);
 
     ship player_ships[TOTAL_SHIPS];
     char username[50] = {0};
     char email[50] = {0};
-
+    char log_msg[256];
     const char *hello = "Message received";
 
     int bytes_received = recv(new_socket, username, sizeof(username) - 1, 0);
@@ -300,15 +330,8 @@ void *handle_games(void *client_socket){
         email[bytes_receivede] = '\0';
         printf("Usuario conectado: %s\n", username);
         printf("Email conectado: %s\n", email);
-        fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] Usuario conectado: %s | Email: %s\n",
-            t->tm_year + 1900,
-            t->tm_mon + 1,
-            t->tm_mday,
-            t->tm_hour,
-            t->tm_min,
-            t->tm_sec,
-            username,
-            email);
+        snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s | Email: %s", username, email);
+        safe_log(log_msg);
     } else {
         printf("No se recibió nombre de usuario\n");
         close(new_socket);
@@ -340,22 +363,6 @@ void *handle_games(void *client_socket){
         }
 
     } else {
-        for (int i = 0; i < 9; ++i) {
-            fprintf(log_file, "  Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
-                    i + 1,
-                    session->ships1[i].posX,
-                    session->ships1[i].posY,
-                    session->ships1[i].size,
-                    session->ships1[i].dir ? "Vertical" : "Horizontal");
-        }
-        for (int i = 0; i < 9; ++i) {
-            fprintf(log_file, "  Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
-                    i + 1,
-                    session->ships2[i].posX,
-                    session->ships2[i].posY,
-                    session->ships2[i].size,
-                    session->ships2[i].dir ? "Vertical" : "Horizontal");
-        }
         session->player2_fd = new_socket;
         strncpy(session->player2_name, username, sizeof(session->player2_name));
         memcpy(session->ships2, player_ships, sizeof(ship) * TOTAL_SHIPS);
@@ -401,6 +408,8 @@ void *handle_games(void *client_socket){
                 attack att = decodeAttack(at);
 
                 printf("Jugador 1 ataca: x = %d, y = %d\n", att.posX, att.posY);
+                snprintf(log_msg, sizeof(log_msg),"Jugador 1 ataca: x = %d, y = %d\n", att.posX, att.posY);
+                safe_log(log_msg);
                 if (shoot(board2, att.posX, att.posY)) {
                     hits1++;
                     send(session->player1_fd, "Acierto", strlen("Acierto") + 1, 0);
@@ -421,7 +430,8 @@ void *handle_games(void *client_socket){
                 }
 
                 attack att = decodeAttack(at);
-
+                snprintf(log_msg, sizeof(log_msg),"Jugador 2 ataca: x = %d, y = %d\n", att.posX, att.posY);
+                safe_log(log_msg);
                 printf("Jugador 2 ataca: x = %d, y = %d\n", att.posX, att.posY);
 
                 if (shoot(board1, att.posX, att.posY)) {
@@ -452,7 +462,7 @@ void *handle_games(void *client_socket){
     
     pthread_mutex_unlock(&session_mutex);
     
-
+    
     return NULL;
 
 }
