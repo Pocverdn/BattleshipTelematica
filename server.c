@@ -311,27 +311,53 @@ void send_turn_messages(int active_fd, int waiting_fd) {
 }
 
 bool handle_turn(GameSession *session, char board[SIZE][SIZE], int attacker_fd, int defender_fd, int *hits, int player_number) {
+    
+    fd_set read_fds;
+    struct timeval timeout;
     unsigned char at;
-    int bytes = recv(attacker_fd, &at, sizeof(at), 0);
-    if (bytes <= 0) return false;
+    
 
-    attack att = decodeAttack(at);
-    char log_msg[128];
-    snprintf(log_msg, sizeof(log_msg), "Jugador %d ataca: x = %d, y = %d", player_number, att.posX, att.posY);
-    printf("%s\n", log_msg);
-    safe_log(log_msg);
+    FD_ZERO(&read_fds);
+    FD_SET(attacker_fd, &read_fds);
 
-    if (shoot(board, att.posX, att.posY)) {
-        (*hits)++;
-        send(attacker_fd, "Acierto", strlen("Acierto") + 1, 0);
-        char impact_msg[32];
-        snprintf(impact_msg, sizeof(impact_msg), "Impacto %d %d", att.posX, att.posY);
-        send(defender_fd, impact_msg, strlen(impact_msg) + 1, 0);
+    timeout.tv_sec = 30;
+    timeout.tv_usec = 0;
+
+    int activity = select(attacker_fd + 1, &read_fds, NULL, NULL, &timeout);
+
+    if (activity == -1) {
+        perror("Error en select");
+        return false;
+    } else if (activity == 0) {
+        // Tiempo agotado
+        send(attacker_fd, "timeout", strlen("timeout") + 1, 0);
+        return false; // Pierde el turno
     } else {
-        send(attacker_fd, "Agua", strlen("Agua") + 1, 0);
-    }
+        // Recibir disparo
+        int bytes = recv(attacker_fd, &at, 1, 0);
+        if (bytes <= 0) {
+            perror("Error recibiendo ataque");
+            return false;
+        }
 
-    return true;
+        attack att = decodeAttack(at);
+        char log_msg[128];
+        snprintf(log_msg, sizeof(log_msg), "Jugador %d ataca: x = %d, y = %d", player_number, att.posX, att.posY);
+        printf("%s\n", log_msg);
+        safe_log(log_msg);
+
+        if (shoot(board, att.posX, att.posY)) {
+            (*hits)++;
+            send(attacker_fd, "Acierto", strlen("Acierto") + 1, 0);
+            char impact_msg[32];
+            snprintf(impact_msg, sizeof(impact_msg), "Impacto %d %d", att.posX, att.posY);
+            send(defender_fd, impact_msg, strlen(impact_msg) + 1, 0);
+        } else {
+            send(attacker_fd, "Agua", strlen("Agua") + 1, 0);
+        }
+
+        return true;
+    }
 }
 
 void play_game(GameSession *session) {
@@ -355,19 +381,28 @@ void play_game(GameSession *session) {
         printf("\nNuevo turno\n");
         if (turn) {
             send_turn_messages(session->player1_fd, session->player2_fd);
-            if (!handle_turn(session, board2, session->player1_fd, session->player2_fd, &hits1, 1)) break;
+            if (!handle_turn(session, board2, session->player1_fd, session->player2_fd, &hits1, 1)){
+                printf("Jugador 1 perdió su turno.\n");
+                turn = !turn;
+            }else {
+                turn = !turn;
+            }
         } else {
             send_turn_messages(session->player2_fd, session->player1_fd);
-            if (!handle_turn(session, board1, session->player2_fd, session->player1_fd, &hits2, 2)) break;
+            if (!handle_turn(session, board1, session->player2_fd, session->player1_fd, &hits2, 2)){
+                printf("Jugador 2 perdió su turno.\n");
+                turn = !turn;
+            }else {
+                turn = !turn;
+            }
         }
-        turn = !turn;
     }
 
     if (hits1 >= totalHits) {
-        send(session->player1_fd, "¡Ganaste!", 9, 0);
+        send(session->player1_fd, "Ganaste", 9, 0);
         send(session->player2_fd, "Perdiste", 8, 0);
     } else {
-        send(session->player2_fd, "¡Ganaste!", 9, 0);
+        send(session->player2_fd, "Ganaste", 9, 0);
         send(session->player1_fd, "Perdiste", 8, 0);
     }
 

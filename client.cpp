@@ -358,7 +358,14 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             }
 
             trim(msg = string(buffer));
-            if (msg == "Acierto") {
+            
+            if (msg == "timeout") {
+                cout << "⏰ Te quedaste sin tiempo para atacar. Pierdes el turno.\n";
+        
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cin.clear();
+        
+            } else if (msg == "Acierto") {
                 enemyBoard[x][y] = 'X';
                 cout << "¡Acierto!\n";
                 totalHits++;
@@ -379,7 +386,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             cout << "\n💥 ¡Tu enemigo te ha dado en X: " << x << " Y: " << y << "\n";
             showBoard(board, ships, enemyBoard);
 
-        }else if (msg == "¡Ganaste!") {
+        }else if (msg == "Ganaste") {
             cout << "\n🎉 ¡Has ganado la partida!\n";
             break;
         } else if (msg == "Perdiste") {
