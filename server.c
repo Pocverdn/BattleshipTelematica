@@ -107,7 +107,6 @@ void initializeBoard(char board[SIZE][SIZE]) {
         }
     }
 }
-//
 
 void safe_log(const char* message) {
     int fd = open("log.log", O_WRONLY | O_CREAT | O_APPEND, 0644);
@@ -144,7 +143,7 @@ void safe_log(const char* message) {
     flock(fd, LOCK_UN); 
     fclose(log_file);  
 }
-//
+
 bool placeShipSize(char board[SIZE][SIZE], ship s) {
     for(int i = 0; i < s.size; ++i) {
         int x = s.posX + (s.dir ? i : 0);
@@ -235,43 +234,6 @@ int countShips(ship ships[TOTAL_SHIPS]) {
     return total;
 }
 
-struct ship* deserializeShips(const char* serialized, int* count) {
-    static struct ship ships[9]; // Static para que persista luego del return
-    *count = 0;
-
-    char input[BUFFER_SIZE];
-    strncpy(input, serialized, BUFFER_SIZE);
-    input[BUFFER_SIZE - 1] = '\0';
-
-    char* token = strtok(input, ";");
-    while (token != NULL && *count < 9) {
-        int x, y, size, dir;
-        if (sscanf(token, "%d %d %d %d", &x, &y, &size, &dir) == 4) {
-            ships[*count].posX = x;
-            ships[*count].posY = y;
-            ships[*count].size = size;
-            ships[*count].dir = dir;
-            (*count)++;
-        }
-        token = strtok(NULL, ";");
-    }
-
-    return ships;
-}
-
-/*
-int send_encoded_ships(int client_fd, ship ships[]) {
-    unsigned char *buffer = encode(ships);
-    int sent = send(client_fd, buffer, strlen(buffer), 0);
-    printf("Sent: %d\n", sent);
-    if (sent == -1) {
-        perror("Error enviando barco codificado");
-        return -1;
-    }
-    printf("Sent: %d\n", sent);
-}
-*/
-
 int receive_encoded_ships(int client_fd, ship ships[]) {
     unsigned char buffer[BUFFER_SIZE];
     int bytes = read(client_fd, buffer, BUFFER_SIZE);
@@ -285,17 +247,6 @@ int receive_encoded_ships(int client_fd, ship ships[]) {
 
     struct ship *decoded = decode(buffer);
     memcpy(ships, decoded, sizeof(struct ship) * TOTAL_SHIPS);
-    return 0;
-}
-
-int send_encoded_ships(int client_fd, ship ships[]) {
-    unsigned char *buffer = encode(ships);
-    int sent = write(client_fd, buffer, 14);
-    printf("Sent: %d\n", sent);
-    if (sent != 14) {
-        perror("Error enviando barcos codificados");
-        return -1;
-    }
     return 0;
 }
 
@@ -313,30 +264,124 @@ attack decodeAttack(unsigned char A) {
 	return decoded;
 }
 
-void *handle_games(void *client_socket){
+unsigned char encodeAttack(attack A) {
+    unsigned char encoded;
+
+    encoded =  A.posX;
+    encoded = encoded | (A.posY << 4);
+
+    return encoded;
+}
+
+void receive_player_info(int socket, char *username, char *email) {
+    int bytes_username = recv(socket, username, 49, 0);
+    int bytes_email = recv(socket, email, 49, 0);
+
+    if (bytes_username <= 0 || bytes_email <= 0) {
+        perror("Error recibiendo datos del usuario");
+        close(socket);
+        pthread_exit(NULL);
+    }
+
+    username[bytes_username] = '\0';
+    email[bytes_email] = '\0';
+
+    printf("Usuario conectado: %s\nEmail conectado: %s\n", username, email);
+
+    char log_msg[256];
+    snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s | Email: %s", username, email);
+    safe_log(log_msg);
+}
+
+void initialize_session(GameSession *session, int socket, const char *username, ship *ships) {
+    session->player1_fd = socket;
+    strncpy(session->player1_name, username, sizeof(session->player1_name));
+    memcpy(session->ships1, ships, sizeof(ship) * TOTAL_SHIPS);
+
+    for (int i = 0; i < TOTAL_SHIPS; ++i) {
+        printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
+               i + 1, ships[i].posX, ships[i].posY, ships[i].size,
+               ships[i].dir ? "Vertical" : "Horizontal");
+    }
+}
+
+void send_turn_messages(int active_fd, int waiting_fd) {
+    send(active_fd, "turn", strlen("turn") + 1, 0);
+    send(waiting_fd, "wait", strlen("wait") + 1, 0);
+}
+
+bool handle_turn(GameSession *session, char board[SIZE][SIZE], int attacker_fd, int defender_fd, int *hits, int player_number) {
+    unsigned char at;
+    int bytes = recv(attacker_fd, &at, sizeof(at), 0);
+    if (bytes <= 0) return false;
+
+    attack att = decodeAttack(at);
+    char log_msg[128];
+    snprintf(log_msg, sizeof(log_msg), "Jugador %d ataca: x = %d, y = %d", player_number, att.posX, att.posY);
+    printf("%s\n", log_msg);
+    safe_log(log_msg);
+
+    if (shoot(board, att.posX, att.posY)) {
+        (*hits)++;
+        send(attacker_fd, "Acierto", strlen("Acierto") + 1, 0);
+        char impact_msg[32];
+        snprintf(impact_msg, sizeof(impact_msg), "Impacto %d %d", att.posX, att.posY);
+        send(defender_fd, impact_msg, strlen(impact_msg) + 1, 0);
+    } else {
+        send(attacker_fd, "Agua", strlen("Agua") + 1, 0);
+    }
+
+    return true;
+}
+
+void play_game(GameSession *session) {
+    char board1[SIZE][SIZE], board2[SIZE][SIZE];
+    initializeBoard(board1);
+    initializeBoard(board2);
+
+    showBoard(board1, session->ships1);
+    showBoard(board2, session->ships2);
+
+    setShips(board1, session->ships1, session->player1_name);
+    setShips(board2, session->ships2, session->player2_name);
+
+    int hits1 = 0, hits2 = 0;
+    int totalHits = countShips(session->ships1);
+    bool turn = true;
+
+    printf("\n---- ¡Comienza el juego! ----\n");
+
+    while (hits1 < totalHits && hits2 < totalHits) {
+        printf("\nNuevo turno\n");
+        if (turn) {
+            send_turn_messages(session->player1_fd, session->player2_fd);
+            if (!handle_turn(session, board2, session->player1_fd, session->player2_fd, &hits1, 1)) break;
+        } else {
+            send_turn_messages(session->player2_fd, session->player1_fd);
+            if (!handle_turn(session, board1, session->player2_fd, session->player1_fd, &hits2, 2)) break;
+        }
+        turn = !turn;
+    }
+
+    if (hits1 >= totalHits) {
+        send(session->player1_fd, "¡Ganaste!", 9, 0);
+        send(session->player2_fd, "Perdiste", 8, 0);
+    } else {
+        send(session->player2_fd, "¡Ganaste!", 9, 0);
+        send(session->player1_fd, "Perdiste", 8, 0);
+    }
+
+    current_session = (current_session + 1) % MAX_SESSIONS;
+}
+
+void *handle_games(void *client_socket) {
     int new_socket = *(int *)client_socket;
     free(client_socket);
 
     ship player_ships[TOTAL_SHIPS];
-    char username[50] = {0};
-    char email[50] = {0};
-    char log_msg[256];
-    const char *hello = "Message received";
+    char username[50], email[50];
 
-    int bytes_received = recv(new_socket, username, sizeof(username) - 1, 0);
-    int bytes_receivede = recv(new_socket, email, sizeof(email) - 1, 0);
-    if (bytes_received>0) {
-        username[bytes_received] = '\0';
-        email[bytes_receivede] = '\0';
-        printf("Usuario conectado: %s\n", username);
-        printf("Email conectado: %s\n", email);
-        snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s | Email: %s", username, email);
-        safe_log(log_msg);
-    } else {
-        printf("No se recibió nombre de usuario\n");
-        close(new_socket);
-        return NULL;
-    }
+    receive_player_info(new_socket, username, email);
 
     if (receive_encoded_ships(new_socket, player_ships) < 0) {
         close(new_socket);
@@ -344,132 +389,20 @@ void *handle_games(void *client_socket){
     }
 
     pthread_mutex_lock(&session_mutex);
-
     GameSession *session = &game_sessions[current_session];
 
     if (session->player1_fd == 0) {
-        
-        session->player1_fd = new_socket;
-        strncpy(session->player1_name, username, sizeof(session->player1_name));
-        memcpy(session->ships1, player_ships, sizeof(ship) * TOTAL_SHIPS);
-
-        for (int i = 0; i < 9; ++i) {
-            printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
-                   i + 1,
-                   session->ships1[i].posX,
-                   session->ships1[i].posY,
-                   session->ships1[i].size,
-                   session->ships1[i].dir ? "Vertical" : "Horizontal");   
-        }
-
+        initialize_session(session, new_socket, username, player_ships);
     } else {
         session->player2_fd = new_socket;
         strncpy(session->player2_name, username, sizeof(session->player2_name));
         memcpy(session->ships2, player_ships, sizeof(ship) * TOTAL_SHIPS);
-        
-        char board1[SIZE][SIZE];
-        char board2[SIZE][SIZE];
 
-        initializeBoard(board1);
-        initializeBoard(board2);
-
-        showBoard(board1, session->ships1);
-        showBoard(board2, session->ships2);
-
-        setShips(board1, session->ships1, session->player1_name);
-        setShips(board2, session->ships2, session->player2_name);
-
-        printf("%c\n",board1[1][1]);
-
-        int hits1 = 0;
-        int hits2 = 0;
-
-        int totalHitsNeeded = countShips(session->ships1);
-
-        printf("\n---- ¡Comienza el juego! ----\n");
-        bool turn = true;
-        unsigned char at;
-
-        while (hits1 < totalHitsNeeded && hits2 < totalHitsNeeded) {
-            printf("\nNuevo turno\n");
-            if (turn) {
-                send(session->player1_fd, "turn", strlen("turn") + 1, 0);
-                send(session->player2_fd, "wait", strlen("wait") + 1, 0);
-
-                int bytes_received = recv(session->player1_fd, &at, sizeof(at), 0);
-                if (bytes_received <= 0) {
-                    printf("Error al recibir ataque de jugador 1\n");
-                    break;
-                }
-
-                attack att = decodeAttack(at);
-
-                printf("Jugador 1 ataca: x = %d, y = %d\n", att.posX, att.posY);
-                snprintf(log_msg, sizeof(log_msg),"Jugador 1 ataca: x = %d, y = %d\n", att.posX, att.posY);
-                safe_log(log_msg);
-
-                if (shoot(board2, att.posX, att.posY)) {
-                    hits1++;
-                    send(session->player1_fd, "Acierto", strlen("Acierto") + 1, 0);
-                    
-                    char impact_msg[32];
-                    snprintf(impact_msg, sizeof(impact_msg), "Impacto %d %d", att.posX, att.posY);
-                    send(session->player2_fd, impact_msg, strlen(impact_msg) + 1, 0);
-
-
-                }else {
-                    send(session->player1_fd, "Agua", strlen("Agua") + 1, 0);
-                }
-                
-
-            } else {
-                send(session->player2_fd, "turn", strlen("turn") + 1, 0);
-                send(session->player1_fd, "wait", strlen("wait") + 1, 0);
-
-                int bytes_received = recv(session->player2_fd, &at, sizeof(at), 0);
-                if (bytes_received <= 0) {
-                    printf("Error al recibir ataque de jugador 2\n");
-                    break;
-                }
-
-                attack att = decodeAttack(at);
-
-                snprintf(log_msg, sizeof(log_msg),"Jugador 2 ataca: x = %d, y = %d\n", att.posX, att.posY);
-                safe_log(log_msg);
-                printf("Jugador 2 ataca: x = %d, y = %d\n", att.posX, att.posY);
-
-                if (shoot(board1, att.posX, att.posY)) {
-                    char impact_msg[32];
-                    snprintf(impact_msg, sizeof(impact_msg), "Impacto %d %d", att.posX, att.posY);
-                    send(session->player1_fd, impact_msg, strlen(impact_msg) + 1, 0);
-                }else {
-                    send(session->player2_fd, "Agua", strlen("Agua") + 1, 0);
-                }
-                
-
-            }
-            turn = !turn;
-        }
-
-        if (hits1 >= totalHitsNeeded) {
-            send(session->player1_fd, "¡Ganaste!", 9, 0);
-            send(session->player2_fd, "Perdiste", 8, 0);
-        } else {
-            send(session->player2_fd, "¡Ganaste!", 9, 0);
-            send(session->player1_fd, "Perdiste", 8, 0);
-        }
-        
-        current_session++;
-        if (current_session >= MAX_SESSIONS) {
-            current_session = 0;
-        }
+        play_game(session);
     }
-        
-    pthread_mutex_unlock(&session_mutex);
-    
-    
-    return NULL;
 
+    pthread_mutex_unlock(&session_mutex);
+    return NULL;
 }
 
 

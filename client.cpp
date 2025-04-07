@@ -76,27 +76,18 @@ ship* decode(const unsigned char arr[]) {
 unsigned char encodeAttack(struct attack A) {
 	unsigned char encoded;
 
-
 	encoded =  A.posX;
 	encoded = encoded | (A.posY << 4);
 
-	printf("El byte del ataque: ");
-	printf("%x", encoded);
-	printf("\n");
 	return encoded;
 }
 
 struct attack decodeAttack(unsigned char A) {
 	struct attack decoded;
 
-
 	decoded.posX = A & 0xF;
 	decoded.posY = (A & 0xF0) >> 4;
 
-	//printf("La posX del ataque: ");
-	//printf("%x", decoded.posX);
-	//printf("\n");
-	//printf("La posY del ataque: ");
 	return decoded;
 }
 
@@ -376,6 +367,8 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
                 cout << "¡Agua!\n";
             }
 
+            showBoard(board, ships, enemyBoard);
+
         } else if(msg == "wait"){
             cout << "\n Turno del enemigo \n";
 
@@ -384,6 +377,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             sscanf(msg.c_str(), "Impacto %d %d", &x, &y);
             board[x][y] = 'X';
             cout << "\n💥 ¡Tu enemigo te ha dado en X: " << x << " Y: " << y << "\n";
+            showBoard(board, ships, enemyBoard);
 
         }else if (msg == "¡Ganaste!") {
             cout << "\n🎉 ¡Has ganado la partida!\n";
@@ -393,7 +387,6 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             break;
         }
 
-        showBoard(board, ships, enemyBoard);
     }
 
 }
