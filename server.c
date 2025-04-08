@@ -366,6 +366,7 @@ bool handle_turn(GameSession *session, char board[SIZE][SIZE], int attacker_fd, 
 }
 
 void play_game(GameSession *session, char * path) {
+    current_session = (current_session + 1) % MAX_SESSIONS;
     char board1[SIZE][SIZE], board2[SIZE][SIZE];
     initializeBoard(board1);
     initializeBoard(board2);
@@ -411,7 +412,7 @@ void play_game(GameSession *session, char * path) {
         send(session->player1_fd, "Perdiste", 8, 0);
     }
 
-    current_session = (current_session + 1) % MAX_SESSIONS;
+    
 }
 
 void *handle_games(void* arg) {
