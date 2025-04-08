@@ -132,7 +132,7 @@ void setShips(char board[10][10],struct ship ships[9], string username) {
 			int x, y, size;
 			int dir;
 			if (randp) {
-				cout << "Barco #" << i + 1 << " - Ingresa X Y Tamano Direccion(H=0/V=1): ";
+				cout << "Barco #" << i + 1 << " de tamaño " << (int)sizes[i] <<" - Ingresa X Y Direccion(H=0/V=1): ";
 				cin >> x >> y >> dir;
 			}
 			else {
