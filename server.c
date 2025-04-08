@@ -437,18 +437,18 @@ void *handle_games(void *arg) {
 
     for (int i = 0; i < current_session; ++i) {
         GameSession *session = &game_sessions[i];
-        if (session->player2_fd == 0) {
+        if (session->player1_fd != 0 && session->player2_fd == 0) {
             // Completa sesión existente
             session->player2_fd = new_socket;
             strncpy(session->player2_name, username, sizeof(session->player2_name));
             memcpy(session->ships2, player_ships, sizeof(ship) * TOTAL_SHIPS);
             paired = 1;
-
+    
             pthread_mutex_unlock(&session_mutex);
-
+    
             printf("Jugador %s se ha emparejado con %s (sesión %d)\n",
                    username, session->player1_name, i);
-
+    
             play_game(session, path); 
             free(args);
             return NULL;
