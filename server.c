@@ -447,7 +447,6 @@ void *handle_games(void* arg) {
     return NULL;
 }
 
-
 extern inline int setup_server(Server *server, char* IP, char* port) {
     server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server->server_fd == -1) {
@@ -515,7 +514,6 @@ extern inline void accept_clients(Server *server,char * path) {
         pthread_detach(thread_id);
     }
 }
-
 
 int main(int argc, char* argv[]) {
     Server server;
