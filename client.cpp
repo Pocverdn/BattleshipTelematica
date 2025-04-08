@@ -407,9 +407,9 @@ void chat_with_server(int client_fd) {
 
     std::cout << "Enter your username: ";
     std::getline(std::cin >> std::ws, username);
+    send(client_fd, username.c_str(), username.length(), 0);
     std::cout << "Enter your email: ";
     std::getline(std::cin >> std::ws, email);
-    send(client_fd, username.c_str(), username.length(), 0);
     send(client_fd, email.c_str(), email.length(), 0);
     char board1[SIZE][SIZE];
     char board2[SIZE][SIZE];
