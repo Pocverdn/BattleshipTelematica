@@ -42,7 +42,7 @@ typedef struct ship {
     unsigned char posY;  // 4 bits
     unsigned char size;  // 3 bits
     bool dir;            // 0 = horizontal, 1 = vertical
-    unsigned char hp;
+    int impacts; 
 } ship;
 
 typedef struct {
@@ -202,27 +202,45 @@ void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS]) {
     }
 }
 
-bool shoot(char board[SIZE][SIZE], int x, int y) {
+bool shoot(char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int x, int y) {
     if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) {
         printf("Coordenadas inválidas.\n");
         return false;
     }
 
-    printf("%c \n", board[x][y]);
-
-    if (board[x][y] == 'B') {
-        board[x][y] = 'X';
-        printf("¡Acierto!\n");
-        return true;
-    } else if (board[x][y] == 'X' || board[x][y] == 'O') {
+    // Verificar si ya se disparó en esa posición
+    if (board[x][y] == 'X' || board[x][y] == 'O') {
         printf("Ya disparaste ahí. Pierdes turno.\n");
         return false;
-    } else {
-        board[x][y] = 'O';
-        printf("¡Agua!\n");
-        return false;
     }
+
+    // Revisar si el disparo impacta un barco
+    for (int i = 0; i < TOTAL_SHIPS; i++) {
+        ship *s = &ships[i];
+        for (int j = 0; j < s->size; j++) {
+            int impactX = s->posX + (s->dir ? j : 0);
+            int impactY = s->posY + (s->dir ? 0 : j);
+
+            if (x == impactX && y == impactY) {
+                s->impacts++;
+                board[x][y] = 'X';
+                printf("¡Acierto!\n");
+
+                if (s->impacts == s->size) {
+                    printf("💥 ¡Hundiste el barco %d (tamaño %d)! 💥\n", i + 1, s->size);
+                }
+
+                return true;
+            }
+        }
+    }
+
+    // Si no impactó ningún barco
+    board[x][y] = 'O';
+    printf("¡Agua!\n");
+    return false;
 }
+
 
 int countShoot(char board[SIZE][SIZE]) {
     int count = 0;
@@ -315,7 +333,7 @@ void send_turn_messages(int active_fd, int waiting_fd) {
     send(waiting_fd, "wait", strlen("wait") + 1, 0);
 }
 
-bool handle_turn(GameSession *session, char board[SIZE][SIZE], int attacker_fd, int defender_fd, int *hits, int player_number,char* path) {
+bool handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int attacker_fd, int defender_fd, int *hits, int player_number,char* path) {
     
     fd_set read_fds;
     struct timeval timeout;
@@ -350,8 +368,21 @@ bool handle_turn(GameSession *session, char board[SIZE][SIZE], int attacker_fd, 
         snprintf(log_msg, sizeof(log_msg), "Jugador %d ataca: x = %d, y = %d", player_number, att.posX, att.posY);
         printf("%s\n", log_msg);
         safe_log(log_msg,path);
+
+        if (att.posX == 10 && att.posY == 10) {
+            char surrender_msg[64];
+            snprintf(surrender_msg, sizeof(surrender_msg), "Jugador %d se ha rendido.", player_number);
+            printf("%s\n", surrender_msg);
+            safe_log(surrender_msg, path);
         
-        if (shoot(board, att.posX, att.posY)) {
+            send(defender_fd, "Ganaste", strlen("Ganaste") + 1, 0);
+            send(attacker_fd, "Rendicion", strlen("Rendicion") + 1, 0);
+        
+            exit(0);
+        }
+        
+        
+        if (shoot(board, ships, att.posX, att.posY)) {
             (*hits)++;
             send(attacker_fd, "Acierto", strlen("Acierto") + 1, 0);
             char impact_msg[32];
@@ -387,7 +418,7 @@ void play_game(GameSession *session, char * path) {
         printf("\nNuevo turno\n");
         if (turn) {
             send_turn_messages(session->player1_fd, session->player2_fd);
-            if (!handle_turn(session, board2, session->player1_fd, session->player2_fd, &hits1, 1,path)){
+            if (!handle_turn(session, board2, session->ships2 ,session->player1_fd, session->player2_fd, &hits1, 1,path)){
                 printf("Jugador 1 perdió su turno.\n");
                 turn = !turn;
             }else {
@@ -395,7 +426,7 @@ void play_game(GameSession *session, char * path) {
             }
         } else {
             send_turn_messages(session->player2_fd, session->player1_fd);
-            if (!handle_turn(session, board1, session->player2_fd, session->player1_fd, &hits2, 2, path)){
+            if (!handle_turn(session, board1, session->ships1, session->player2_fd, session->player1_fd, &hits2, 2, path)){
                 printf("Jugador 2 perdió su turno.\n");
                 turn = !turn;
             }else {
@@ -438,7 +469,7 @@ void *handle_games(void *arg) {
     for (int i = 0; i < current_session; ++i) {
         GameSession *session = &game_sessions[i];
         if (session->player1_fd != 0 && session->player2_fd == 0) {
-            // Completa sesión existente
+            
             session->player2_fd = new_socket;
             strncpy(session->player2_name, username, sizeof(session->player2_name));
             memcpy(session->ships2, player_ships, sizeof(ship) * TOTAL_SHIPS);

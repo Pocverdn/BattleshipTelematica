@@ -28,7 +28,7 @@ struct ship {
     unsigned char posY;  // 4 bits
     unsigned char size;  // 3 bits
     bool dir;            // 0 = horizontal, 1 = vertical
-    unsigned char hp = 0;
+    int impacts;
 };
 
 struct attack {
@@ -341,9 +341,10 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             int x, y;
             do {
+                cout << "Digite las coordenadas 10 10 para rendirse\n";
                 cout << "Ingresa coordenadas Y X: ";
                 cin >> x >> y;
-            } while (x < 0 || x >= SIZE || y < 0 || y >= SIZE);
+            } while (x < 0 || x > SIZE || y < 0 || y > SIZE);
 
             att.posX = x;
             att.posY = y;
@@ -351,6 +352,14 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             unsigned char serialized = encodeAttack(att);
 
             system("clear");
+
+            if (att.posX == 10 && att.posY == 10) {
+
+                send(sock, &serialized, sizeof(serialized), 0);
+
+                close(sock);
+                exit(0);
+            }
 
             send(sock, &serialized, sizeof(serialized), 0);
 
