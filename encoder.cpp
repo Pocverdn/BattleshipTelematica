@@ -94,6 +94,11 @@ void setShips(char board[10][10],struct ship ships[9], int playerNumber) {
 
 }
 
+void setShipsServer(char board[10][10], struct ship ships[9], int playerNumber) {
+	for (int i = 0; i < 9; ++i) 
+		placeShipSize(board, ships[i]);
+}
+
 void showBoard(char board[10][10]) {
 	cout << "  ";
 	for (int j = 0; j < 10; ++j) cout << j << " ";
@@ -228,9 +233,16 @@ int main(int argc, char* argv[]) {
 			navy[i].dir ? "Vertical" : "Horizontal");
 	}
 	struct attack a;
-	a.posX = 7;
+	a.posX = 4;
 	a.posY = 6;
-	printf("%X", decodeAttack(encodeAttack(a)).posY);
+	unsigned char b [2];
+	b[1] = encodeAttack(a);
+	b[0] = 'A';
+	printf("%x %x \n",b[0],b[1]);
+
+	printf("%X\n", decodeAttack(encodeAttack(a)).posY);
+
+	printf("\nEl posX de la prueba:%X\n", decodeAttack(b[1]).posX);
 	//free(navy);
 	//printf("%x", *(cNavy+3));
 	//printf("%X",cNavy);
