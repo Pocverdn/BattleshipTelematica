@@ -510,7 +510,7 @@ extern inline void accept_clients(Server *server,char * path) {
             free(new_socket);
             continue;
         }
-
+        free(args);
         pthread_detach(thread_id);
     }
 }
