@@ -350,6 +350,8 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             unsigned char serialized = encodeAttack(att);
 
+            system("clear");
+
             send(sock, &serialized, sizeof(serialized), 0);
 
             memset(buffer, 0, sizeof(buffer));
@@ -362,18 +364,18 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             trim(msg = string(buffer));
             
             if (msg == "timeout") {
-                cout << "⏰ Te quedaste sin tiempo para atacar. Pierdes el turno.\n";
+                cout << "⏰ Te quedaste sin tiempo para atacar. Pierdes el turno.\n\n";
         
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 cin.clear();
         
             } else if (msg == "Acierto") {
                 enemyBoard[x][y] = 'X';
-                cout << "¡Acierto!\n";
+                cout << "¡Acierto!\n\n";
                 totalHits++;
             } else if (msg == "Agua") {
                 enemyBoard[x][y] = 'O';
-                cout << "¡Agua!\n";
+                cout << "\n¡Agua!\n\n";
             }
 
             showBoard(board, ships, enemyBoard);
@@ -385,14 +387,14 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             int x, y;
             sscanf(msg.c_str(), "Impacto %d %d", &x, &y);
             board[x][y] = 'X';
-            cout << "\n💥 ¡Tu enemigo te ha dado en X: " << x << " Y: " << y << "\n";
+            cout << "\n💥 ¡Tu enemigo te ha dado en X: " << x << " Y: " << y << "\n\n";
             showBoard(board, ships, enemyBoard);
 
         }else if (msg == "Ganaste") {
-            cout << "\n🎉 ¡Has ganado la partida!\n";
+            cout << "\n🎉 ¡Has ganado la partida!\n\n";
             break;
         } else if (msg == "Perdiste") {
-            cout << "\n😢 Has perdido la partida.\n";
+            cout << "\n😢 Has perdido la partida.\n\n";
             break;
         }
 
