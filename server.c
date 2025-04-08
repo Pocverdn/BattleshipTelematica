@@ -473,7 +473,6 @@ extern inline int setup_server(Server *server, char* IP, char* port) {
         perror("Listen failed");
         exit(-1);
     }
-
     printf("Server is listening on port %d...\n", atoi(port));
     return 0;
 }
@@ -481,12 +480,7 @@ extern inline int setup_server(Server *server, char* IP, char* port) {
 extern inline void accept_clients(Server *server,char * path) {
     int addrlen = sizeof(server->address);
     pthread_t thread_id;
-    ThreadArgs* args = malloc(sizeof(ThreadArgs));
-    if (args == NULL) {
-        perror("malloc");
-        exit(1);
-    }
-
+    
     
     while (1) {
         int *new_socket = malloc(sizeof(int));
@@ -501,6 +495,12 @@ extern inline void accept_clients(Server *server,char * path) {
             free(new_socket);
             continue;
         }
+        ThreadArgs* args = malloc(sizeof(ThreadArgs));
+        if (args == NULL) {
+            perror("malloc");
+            exit(1);
+        }
+    
         args->client_socket = *new_socket;
         strncpy(args->path, path, sizeof(args->path));
         args->path[sizeof(args->path) - 1] = '\0';
@@ -510,7 +510,6 @@ extern inline void accept_clients(Server *server,char * path) {
             free(new_socket);
             continue;
         }
-        free(args);
         pthread_detach(thread_id);
     }
 }
