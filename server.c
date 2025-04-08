@@ -415,38 +415,64 @@ void play_game(GameSession *session, char * path) {
     
 }
 
-void *handle_games(void* arg) {
-    ThreadArgs* args = (ThreadArgs*)arg;
+void *handle_games(void *arg) {
+    ThreadArgs *args = (ThreadArgs *)arg;
     int new_socket = args->client_socket;
-    char* path = args->path;
+    char *path = args->path;
 
     ship player_ships[TOTAL_SHIPS];
     char username[50], email[50];
 
-    receive_player_info(new_socket, username, email,path);
+    receive_player_info(new_socket, username, email, path);
 
     if (receive_encoded_ships(new_socket, player_ships) < 0) {
         close(new_socket);
+        free(args);
         return NULL;
     }
 
     pthread_mutex_lock(&session_mutex);
-    GameSession *session = &game_sessions[current_session];
 
-    if (session->player1_fd == 0) {
-        initialize_session(session, new_socket, username, player_ships);
-    } else {
-        session->player2_fd = new_socket;
-        strncpy(session->player2_name, username, sizeof(session->player2_name));
-        memcpy(session->ships2, player_ships, sizeof(ship) * TOTAL_SHIPS);
+    int paired = 0;
 
-        play_game(session,path);
+    for (int i = 0; i < current_session; ++i) {
+        GameSession *session = &game_sessions[i];
+        if (session->player2_fd == 0) {
+            // Completa sesión existente
+            session->player2_fd = new_socket;
+            strncpy(session->player2_name, username, sizeof(session->player2_name));
+            memcpy(session->ships2, player_ships, sizeof(ship) * TOTAL_SHIPS);
+            paired = 1;
+
+            pthread_mutex_unlock(&session_mutex);
+
+            printf("Jugador %s se ha emparejado con %s (sesión %d)\n",
+                   username, session->player1_name, i);
+
+            play_game(session, path); 
+            free(args);
+            return NULL;
+        }
     }
 
-    free(args);
+    if (current_session < MAX_SESSIONS) {
+        GameSession *session = &game_sessions[current_session];
+        memset(session, 0, sizeof(GameSession));
+
+        initialize_session(session, new_socket, username, player_ships);
+        current_session++;
+
+        printf("Jugador %s está esperando oponente...\n", username);
+    } else {
+        printf("¡Límite de sesiones alcanzado!\n");
+        close(new_socket);
+    }
+
     pthread_mutex_unlock(&session_mutex);
+    free(args);
     return NULL;
 }
+
 
 extern inline int setup_server(Server *server, char* IP, char* port) {
     server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
