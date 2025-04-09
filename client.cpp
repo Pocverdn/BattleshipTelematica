@@ -9,7 +9,7 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <limits>
-
+#include <pthread.h>
 #include <sys/file.h>  
 #include <fcntl.h> 
 
@@ -357,6 +357,19 @@ std::string serializeShips(ship ships[], int total) {
     return result;
 }
 
+
+void* timed_in(void* att) {
+
+    printf("Thread");
+    unsigned short* mgs = (unsigned short*)att;
+
+    //printf("%d", mgs[0]);
+    cin >> mgs[0] >> mgs[1];
+    //printf("owo");
+    //printf("%x", mgs[0]);
+    return NULL;
+}
+
 void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], int totalH) {
     attack att;
     char buffer[32];
@@ -377,16 +390,32 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
         if (msg == "turn") {
             cout << "\n>>> Es tu turno de atacar.\n";
 
-            int x, y;
+            //short x, y;
+            unsigned short* x = new unsigned short[2]; //x[0] es x t x[1] Y
+            void* arg;
+            x[0] = 0;
+            x[1] = 0;
+            arg = x;
             do {
+                pthread_t thread_id;
                 cout << "Digite las coordenadas 10 10 para rendirse\n";
                 cout << "Ingresa coordenadas Y X: ";
-                cin >> x >> y;
-            } while (x < 0 || x > SIZE || y < 0 || y > SIZE);
+                pthread_create(&thread_id, NULL, timed_in, arg);
+                time_t tiempo;
+                time_t current;
+                time(&tiempo);
+                tiempo = tiempo + 31;
+                do {
 
-            att.posX = x;
-            att.posY = y;
+                    time(&current);
+                } while ((current < tiempo) & (!x[1]));
+            pthread_cancel(thread_id);
+            
+            } while (x[0] > SIZE || x[1] > SIZE);//while (x[0] < 0 || x[0] > SIZE || x[1] < 0 || x[1] > SIZE);
 
+            att.posX = x[0];
+            att.posY = x[1];
+            delete x;
             unsigned char serialized = encodeAttack(att);
 
             system("clear");
@@ -417,15 +446,15 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
                 cin.clear();
         
             } else if (msg == "Acierto") {
-                enemyBoard[x][y] = 'X';
+                enemyBoard[att.posX][att.posY] = 'X';
                 cout << "¡Acierto!\n\n";
                 totalHits++;
             } else if (msg == "Hundir") {
-                enemyBoard[x][y] = 'X';
+                enemyBoard[att.posX][att.posY] = 'X';
                 cout << "\n💥 ¡Hundiste el barco! 💥\n\n";
                 totalHits++;
             } else if (msg == "Agua") {
-                enemyBoard[x][y] = 'O';
+                enemyBoard[att.posX][att.posY] = 'O';
                 cout << "\n¡Agua!\n\n";
             }
 
