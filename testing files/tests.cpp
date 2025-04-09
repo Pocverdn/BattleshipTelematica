@@ -7,17 +7,23 @@
 using namespace std;
 
 void* timed_in(void* att) {
-    unsigned char* mgs = (unsigned char*)att;
-    scanf("%d%d", mgs[0], mgs[1]);
+
+    printf("Thread");
+    unsigned short* mgs = (unsigned short*)att;
+
+    printf("%d", mgs[0]);
+    cin >> mgs[0] >> mgs[1];
+    printf("owo");
+    printf("%x", mgs[0]);
     return NULL;
 }
 
 int main(int argc, char* argv[])
 {
-    static unsigned char att[2];
+    unsigned short* att = new unsigned short[2];
     void* arg;
     //unsigned char* att;
-    att[0] = 0;
+    att[0] = 3;
     att[1] = 0;
     arg = att;
 
@@ -28,12 +34,16 @@ int main(int argc, char* argv[])
     time_t tiempo;
     time_t current;
     time(&tiempo);
-    tiempo = tiempo + 5;
+    tiempo = tiempo + 10;
     do {
+
         time(&current);
     } while ((current < tiempo) & (!att[1]));
-    pthread_cancel(thread_id);
-    cout << att;
+    printf("%d", att[0]);
+    printf("\nball sack\n");
+    printf("%d", pthread_cancel(thread_id));
+    printf("%d ", att[0]);
+    delete att;
 
     return 0;
 }

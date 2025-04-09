@@ -8,7 +8,9 @@
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <time.h>
-#include <limits>
+
+#include <sys/file.h>  
+#include <fcntl.h> 
 
 using namespace std;
 
@@ -35,6 +37,42 @@ struct attack {
     unsigned char posY;  // 4 bits
 };
 
+
+void safe_log(const char* message, const char* path) {
+    int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (fd == -1) {
+        perror("open");
+        return;
+    }
+
+    if (flock(fd, LOCK_EX) == -1) {
+        perror("flock");
+        close(fd);
+        return;
+    }
+
+    FILE* log_file = fdopen(fd, "a");
+    if (!log_file) {
+        perror("fdopen");
+        close(fd);
+        return;
+    }
+
+    time_t now = time(NULL);
+    struct tm* t = localtime(&now);
+    fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] %s\n",
+            t->tm_year + 1900,
+            t->tm_mon + 1,
+            t->tm_mday,
+            t->tm_hour,
+            t->tm_min,
+            t->tm_sec,
+            message);
+
+    fflush(log_file);  
+    flock(fd, LOCK_UN); 
+    fclose(log_file);  
+}
 unsigned char* encode(ship arr[]) {
     static unsigned char encoded[14] = { 0 };
     unsigned char bPos = 0;
@@ -414,7 +452,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
 }
 
-void chat_with_server(int client_fd) {
+void chat_with_server(int client_fd,char* path) {
     char buffer[BUFFER_SIZE] = {0};
     std::string username;
     std::string email;
@@ -433,6 +471,9 @@ void chat_with_server(int client_fd) {
     initializeBoard(board2);
     setShips(board1, ships1, username);
     showBoard(board1, ships1, board2);
+    char log_msg[512];
+    snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s, Email conectado: %s", username.c_str(), email.c_str());
+    safe_log(log_msg, path);
 
     int totalHitsNeeded = countShips(ships1);
 
@@ -458,6 +499,7 @@ int main(int argc, char* argv[]) {
     Config config;
     parse_config("address.config", config.server_ip, &config.PORTLINUX);
 
+    
     std::cout << "Server IP: " << config.server_ip << std::endl;
     std::cout << "Port: " << config.PORTLINUX << std::endl;
 
@@ -466,7 +508,7 @@ int main(int argc, char* argv[]) {
         int client_fd = connect_to_server(config);
         if (client_fd < 0) return -1;
 
-        chat_with_server(client_fd);
+        chat_with_server(client_fd,argv[1]);
 
         int playing;
         cout << "\n¿Quieres jugar otra partida? (1 = sí / 0 = no): ";
