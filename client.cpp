@@ -17,8 +17,8 @@ using namespace std;
 
 #define BUFFER_SIZE 14
 
-#define SIZE 10;
-#define TOTAL_SHIPS  9;
+#define SIZE 10
+#define TOTAL_SHIPS  9
 
 struct Config {
     char server_ip[256];
@@ -360,7 +360,7 @@ std::string serializeShips(ship ships[], int total) {
 
 void* timed_in(void* att) {
 
-    printf("Thread");
+    //printf("Thread");
     unsigned short* mgs = (unsigned short*)att;
 
     //printf("%d", mgs[0]);
@@ -395,7 +395,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             board[x][y] = 'X';
             cout << "\n💥 ¡Tu enemigo te ha dado en X: " << x << " Y: " << y << "\n\n";
             showBoard(board, ships, enemyBoard);
-            msg = "turn";
+            //msg = "turn";
         }
         if (msg == "turn") {
             cout << "\n>>> Es tu turno de atacar.\n";
@@ -449,6 +449,10 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             }
 
             trim(msg = string(buffer));
+
+
+            cout << "Mensaje" <<"\n\n";
+            cout << msg <<"\n\n";
             
             if (msg == "timeout") {
                 cout << "⏰ Te quedaste sin tiempo para atacar. Pierdes el turno.\n\n";

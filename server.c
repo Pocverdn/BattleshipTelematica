@@ -578,13 +578,16 @@ extern inline void accept_clients(Server *server,char * path) {
 }
 
 int main(int argc, char* argv[]) {
-    while (true) {
-        Server server;
-        if (setup_server(&server, argv[1], argv[2]) < 0) {
-            return 1;
-        }
-        accept_clients(&server, argv[3]);
-        close(server.server_fd);
-        return 0;
+    Server server;
+    if (setup_server(&server, argv[1], argv[2]) < 0) {
+        return 1;
     }
+    
+    while (true) {
+        accept_clients(&server, argv[3]);
+    }
+
+    close(server.server_fd);
+
+    return 0;
 }
