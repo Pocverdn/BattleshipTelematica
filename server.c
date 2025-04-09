@@ -10,8 +10,6 @@
 #include <unistd.h> 
 #include <pthread.h>
 #include <time.h>
-// Puerto
-//#define PORT 8080
 
 //14 bytes para envio de posiciones de barcos - 1 byte para comfirmación de disparo
 #define BUFFER_SIZE 14
@@ -101,7 +99,7 @@ unsigned char* encode(ship arr[]) {
         bPos += 1;
     }
 
-    printf("El primer byte de la cadena codificada: %02X\n", encoded[0]);
+    //printf("El primer byte de la cadena codificada: %02X\n", encoded[0]);
     return encoded;
 }
 
@@ -241,7 +239,6 @@ bool shoot(int socket, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], b
     printf("¡Agua!\n");
     return false;
 }
-
 
 int countShoot(char board[SIZE][SIZE]) {
     int count = 0;

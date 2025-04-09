@@ -88,7 +88,7 @@ unsigned char* encode(ship arr[]) {
         encoded[bPos / 8] |= (arr[i].dir << (bPos % 8));
         bPos += 1;
     }
-    std::cout << "El primer byte de la cadena codificada: " << std::hex << (int)encoded[0] << std::endl;
+    //std::cout << "El primer byte de la cadena codificada: " << std::hex << (int)encoded[0] << std::endl;
     return encoded;
 }
 
