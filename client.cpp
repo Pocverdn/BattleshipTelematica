@@ -1,4 +1,3 @@
-#include <limits>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -356,9 +355,9 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             if (att.posX == 10 && att.posY == 10) {
 
                 send(sock, &serialized, sizeof(serialized), 0);
+                cout << "\n😢 Te has rendido.\n\n";
+                break;
 
-                close(sock);
-                exit(0);
             }
 
             send(sock, &serialized, sizeof(serialized), 0);
@@ -382,6 +381,10 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
                 enemyBoard[x][y] = 'X';
                 cout << "¡Acierto!\n\n";
                 totalHits++;
+            } else if (msg == "Hundir") {
+                enemyBoard[x][y] = 'X';
+                cout << "\n💥 ¡Hundiste el barco! 💥\n\n";
+                totalHits++;
             } else if (msg == "Agua") {
                 enemyBoard[x][y] = 'O';
                 cout << "\n¡Agua!\n\n";
@@ -399,7 +402,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             cout << "\n💥 ¡Tu enemigo te ha dado en X: " << x << " Y: " << y << "\n\n";
             showBoard(board, ships, enemyBoard);
 
-        }else if (msg == "Ganaste") {
+        } else if (msg == "Ganaste") {
             cout << "\n🎉 ¡Has ganado la partida!\n\n";
             break;
         } else if (msg == "Perdiste") {
@@ -458,11 +461,25 @@ int main(int argc, char* argv[]) {
     std::cout << "Server IP: " << config.server_ip << std::endl;
     std::cout << "Port: " << config.PORTLINUX << std::endl;
 
-    int client_fd = connect_to_server(config);
-    if (client_fd < 0) return -1;
+    while(true){
 
-    chat_with_server(client_fd);
-    close(client_fd);
+        int client_fd = connect_to_server(config);
+        if (client_fd < 0) return -1;
+
+        chat_with_server(client_fd);
+
+        int playing;
+        cout << "\n¿Quieres jugar otra partida? (1 = sí / 0 = no): ";
+        cin >> playing;
+
+        if(!playing){
+            cout << "Gracias por jugar. ¡Hasta la próxima!\n";
+            break;
+        }
+
+        close(client_fd);
+
+    }
 
     return 0;
 }

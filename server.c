@@ -202,7 +202,7 @@ void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS]) {
     }
 }
 
-bool shoot(char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int x, int y) {
+bool shoot(int socket, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], bool *sunk, int x, int y) {
     if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) {
         printf("Coordenadas inválidas.\n");
         return false;
@@ -227,7 +227,8 @@ bool shoot(char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int x, int y)
                 printf("¡Acierto!\n");
 
                 if (s->impacts == s->size) {
-                    printf("💥 ¡Hundiste el barco %d (tamaño %d)! 💥\n", i + 1, s->size);
+                    printf("¡barco %d hundido (tamaño %d)!\n", i + 1, s->size);
+                    *sunk = true;
                 }
 
                 return true;
@@ -333,13 +334,12 @@ void send_turn_messages(int active_fd, int waiting_fd) {
     send(waiting_fd, "wait", strlen("wait") + 1, 0);
 }
 
-bool handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int attacker_fd, int defender_fd, int *hits, int player_number,char* path) {
+void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int attacker_fd, int defender_fd, int *hits, char *username, bool giveUp, char* path) {
     
     fd_set read_fds;
     struct timeval timeout;
     unsigned char at;
     
-
     FD_ZERO(&read_fds);
     FD_SET(attacker_fd, &read_fds);
 
@@ -350,49 +350,54 @@ bool handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
 
     if (activity == -1) {
         perror("Error en select");
-        return false;
+        
     } else if (activity == 0) {
         // Tiempo agotado
         send(attacker_fd, "timeout", strlen("timeout") + 1, 0);
-        return false; // Pierde el turno
+        printf("Jugador %s perdió su turno.\n", username);
     } else {
-        // Recibir disparo
+        bool sunk = false;
         int bytes = recv(attacker_fd, &at, 1, 0);
         if (bytes <= 0) {
             perror("Error recibiendo ataque");
-            return false;
         }
 
         attack att = decodeAttack(at);
         char log_msg[128];
-        snprintf(log_msg, sizeof(log_msg), "Jugador %d ataca: x = %d, y = %d", player_number, att.posX, att.posY);
+        snprintf(log_msg, sizeof(log_msg), "Jugador %s ataca: x = %d, y = %d", username, att.posX, att.posY);
         printf("%s\n", log_msg);
         safe_log(log_msg,path);
 
         if (att.posX == 10 && att.posY == 10) {
             char surrender_msg[64];
-            snprintf(surrender_msg, sizeof(surrender_msg), "Jugador %d se ha rendido.", player_number);
+            snprintf(surrender_msg, sizeof(surrender_msg), "Jugador %s se ha rendido.", username);
             printf("%s\n", surrender_msg);
             safe_log(surrender_msg, path);
+
+            giveUp = true;
         
             send(defender_fd, "Ganaste", strlen("Ganaste") + 1, 0);
-            send(attacker_fd, "Rendicion", strlen("Rendicion") + 1, 0);
-        
-            exit(0);
         }
-        
-        
-        if (shoot(board, ships, att.posX, att.posY)) {
+
+        if (shoot(attacker_fd, board, ships, &sunk, att.posX, att.posY)) {
             (*hits)++;
-            send(attacker_fd, "Acierto", strlen("Acierto") + 1, 0);
-            char impact_msg[32];
-            snprintf(impact_msg, sizeof(impact_msg), "Impacto %d %d", att.posX, att.posY);
-            send(defender_fd, impact_msg, strlen(impact_msg) + 1, 0);
+
+            if(sunk){
+                printf("Hundido \n");
+                send(attacker_fd, "Hundir", strlen("Hundir") + 1, 0);
+                char impact_msg[32];
+                snprintf(impact_msg, sizeof(impact_msg), "Impacto %d %d", att.posX, att.posY);
+                send(defender_fd, impact_msg, strlen(impact_msg) + 1, 0);
+            }else{
+                send(attacker_fd, "Acierto", strlen("Acierto") + 1, 0);
+                char impact_msg[32];
+                snprintf(impact_msg, sizeof(impact_msg), "Impacto %d %d", att.posX, att.posY);
+                send(defender_fd, impact_msg, strlen(impact_msg) + 1, 0);
+            }
+            
         } else {
             send(attacker_fd, "Agua", strlen("Agua") + 1, 0);
         }
-
-        return true;
     }
 }
 
@@ -411,6 +416,7 @@ void play_game(GameSession *session, char * path) {
     int hits1 = 0, hits2 = 0;
     int totalHits = countShips(session->ships1);
     bool turn = true;
+    bool giveUp1 = false, giveUp2 = false;
 
     printf("\n---- ¡Comienza el juego! ----\n");
 
@@ -418,20 +424,23 @@ void play_game(GameSession *session, char * path) {
         printf("\nNuevo turno\n");
         if (turn) {
             send_turn_messages(session->player1_fd, session->player2_fd);
-            if (!handle_turn(session, board2, session->ships2 ,session->player1_fd, session->player2_fd, &hits1, 1,path)){
-                printf("Jugador 1 perdió su turno.\n");
-                turn = !turn;
-            }else {
-                turn = !turn;
+            handle_turn(session, board2, session->ships2 ,session->player1_fd, session->player2_fd, &hits1, session->player1_name, &giveUp1, path);
+            
+            if(giveUp1){
+                break;
             }
+
+            turn = !turn;
+
         } else {
             send_turn_messages(session->player2_fd, session->player1_fd);
-            if (!handle_turn(session, board1, session->ships1, session->player2_fd, session->player1_fd, &hits2, 2, path)){
-                printf("Jugador 2 perdió su turno.\n");
-                turn = !turn;
-            }else {
-                turn = !turn;
+            handle_turn(session, board1, session->ships1, session->player2_fd, session->player1_fd, &hits2, session->player2_name, &giveUp2, path);
+            
+            if(giveUp2){
+                break;
             }
+
+            turn = !turn;
         }
     }
 
@@ -503,7 +512,6 @@ void *handle_games(void *arg) {
     free(args);
     return NULL;
 }
-
 
 extern inline int setup_server(Server *server, char* IP, char* port) {
     server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
