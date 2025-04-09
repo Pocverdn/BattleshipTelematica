@@ -17,8 +17,8 @@ using namespace std;
 
 #define BUFFER_SIZE 14
 
-#define SIZE = 10;
-#define TOTAL_SHIPS = 9;
+#define SIZE 10;
+#define TOTAL_SHIPS  9;
 
 struct Config {
     char server_ip[256];
