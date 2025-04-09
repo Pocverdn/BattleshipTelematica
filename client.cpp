@@ -404,7 +404,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             unsigned short* x = new unsigned short[2]; //x[0] es x t x[1] Y
             void* arg;
             x[0] = 0;
-            x[1] = 0;
+            x[1] = 247;
             arg = x;
             do {
                 pthread_t thread_id;
