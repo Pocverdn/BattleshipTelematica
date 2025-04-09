@@ -243,72 +243,14 @@ int main(int argc, char* argv[]) {
 	printf("%X\n", decodeAttack(encodeAttack(a)).posY);
 
 	printf("\nEl posX de la prueba:%X\n", decodeAttack(b[1]).posX);
-	//free(navy);
-	//printf("%x", *(cNavy+3));
-	//printf("%X",cNavy);
-	//printf("%X", *cNavy);
-	//printf("\n");
 
-	//char test[3] = { 'B',69,'a' };
+	//time_t Tiempo;
+	time_t current;
+	time(&tiempo);
+	tiempo = tiempo + 10;
+	do {
 
-	//printf("%d",sizeof(bool));
-
-	//printf("%02x", *(test+1));
-
+		time(&current);
+		cout << (tiempo - current) << "\r";
+	} while ((current < tiempo));
 }
-
-
-        /*
-        for (int i = 0; i < 9; ++i) {
-            printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
-                   i + 1,
-                   session->ships1[i].posX,
-                   session->ships1[i].posY,
-                   session->ships1[i].size,
-                   session->ships1[i].dir ? "Vertical" : "Horizontal");   
-        }
-        printf("-------------------------------------------------------------------------------------\n");
-        for (int i = 0; i < 9; ++i) {
-            printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
-                   i + 1,
-                   session->ships2[i].posX,
-                   session->ships2[i].posY,
-                   session->ships2[i].size,
-                   session->ships2[i].dir ? "Vertical" : "Horizontal");   
-        }
-        */
-
-        //send_encoded_ships(session->player1_fd, session->ships2);
-        //send_encoded_ships(session->player2_fd, session->ships2);
-
-
-    /*
-    while (1) {
-        memset(buffer, 0, BUFFER_SIZE);
-        bytes_received = recv(new_socket, buffer, BUFFER_SIZE - 1, 0);
-
-        if (bytes_received <= 0) {
-            printf("Cliente desconectado\n");
-            break;
-        }
-
-        printf("Datos recibidos: %x\n", buffer);
-
-        //int count = 0;
-        struct ship* ships = decode(buffer);
-
-        
-        for (int i = 0; i < 9; ++i) {
-            printf("Barco #%d -> X: %d, Y: %d, Tamaño: %d, Dirección: %s\n",
-                   i + 1,
-                   ships[i].posX,
-                   ships[i].posY,
-                   ships[i].size,
-                   ships[i].dir ? "Vertical" : "Horizontal");
-        }
-
-        send(new_socket, hello, strlen(hello), 0);
-    }
-
-    close(new_socket); 
-    */

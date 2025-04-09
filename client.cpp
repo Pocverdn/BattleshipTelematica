@@ -418,7 +418,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
                 do {
                     
                     time(&current);
-                    cout << (tiempo - current);
+                    cout << (tiempo - current) << "\r";
                 } while ((current < tiempo) & (x[1]==247));
             pthread_cancel(thread_id);
             

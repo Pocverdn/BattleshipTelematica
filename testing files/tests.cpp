@@ -36,8 +36,9 @@ int main(int argc, char* argv[])
     time(&tiempo);
     tiempo = tiempo + 10;
     do {
-
+        
         time(&current);
+        cout << (tiempo - current) << "\r";
     } while ((current < tiempo) & (!att[1]));
     printf("%d", att[0]);
     printf("\nball sack\n");
