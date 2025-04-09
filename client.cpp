@@ -370,6 +370,9 @@ void* timed_in(void* att) {
     return NULL;
 }
 
+
+
+
 void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], int totalH) {
     attack att;
     char buffer[32];
@@ -386,7 +389,14 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
         string msg(buffer);
         trim(msg);
-
+        if (msg.rfind("Impacto", 0) == 0) {
+            int x, y;
+            sscanf(msg.c_str(), "Impacto %d %d", &x, &y);
+            board[x][y] = 'X';
+            cout << "\n💥 ¡Tu enemigo te ha dado en X: " << x << " Y: " << y << "\n\n";
+            showBoard(board, ships, enemyBoard);
+            msg = "turn";
+        }
         if (msg == "turn") {
             cout << "\n>>> Es tu turno de atacar.\n";
 
@@ -463,14 +473,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
         } else if(msg == "wait"){
             cout << "\n Turno del enemigo \n";
 
-        } else if (msg.rfind("Impacto", 0) == 0) {
-            int x, y;
-            sscanf(msg.c_str(), "Impacto %d %d", &x, &y);
-            board[x][y] = 'X';
-            cout << "\n💥 ¡Tu enemigo te ha dado en X: " << x << " Y: " << y << "\n\n";
-            showBoard(board, ships, enemyBoard);
-
-        } else if (msg == "Ganaste") {
+        }  else if (msg == "Ganaste") {
             cout << "\n🎉 ¡Has ganado la partida!\n\n";
             break;
         } else if (msg == "Perdiste") {
