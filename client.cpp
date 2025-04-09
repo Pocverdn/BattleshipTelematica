@@ -17,8 +17,8 @@ using namespace std;
 
 #define BUFFER_SIZE 14
 
-const int SIZE = 10;
-const int TOTAL_SHIPS = 9;
+#define SIZE = 10;
+#define TOTAL_SHIPS = 9;
 
 struct Config {
     char server_ip[256];
@@ -418,7 +418,8 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
                 do {
 
                     time(&current);
-                } while ((current < tiempo) & (!x[1]));
+                    //cout << (tiempo - current) << "\r";
+                } while ((current < tiempo) & (x[1]==247));
             pthread_cancel(thread_id);
             
             } while (x[0] > SIZE || x[1] > SIZE);//while (x[0] < 0 || x[0] > SIZE || x[1] < 0 || x[1] > SIZE);
