@@ -9,18 +9,18 @@ using namespace std;
 void* timed_in(void* att) {
 
     printf("Thread");
-    unsigned char* mgs = (unsigned char*)att;
-    int uwu;
+    unsigned short* mgs = (unsigned short*)att;
+
     printf("%d", mgs[0]);
     cin >> mgs[0] >> mgs[1];
     printf("owo");
-    printf("%d", mgs[0]);
-
+    printf("%x", mgs[0]);
     return NULL;
 }
+
 int main(int argc, char* argv[])
 {
-    unsigned char* att = new unsigned char[2];
+    unsigned short* att = new unsigned short[2];
     void* arg;
     //unsigned char* att;
     att[0] = 3;
