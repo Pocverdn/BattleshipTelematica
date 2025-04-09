@@ -404,7 +404,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             unsigned short* x = new unsigned short[2]; //x[0] es x t x[1] Y
             void* arg;
             x[0] = 0;
-            x[1] = 0;
+            x[1] = 11;
             arg = x;
             do {
                 pthread_t thread_id;
@@ -418,7 +418,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
                 do {
 
                     time(&current);
-                } while ((current < tiempo) & (!x[1]));
+                } while ((current < tiempo) & (x[1]==11));
             pthread_cancel(thread_id);
             
             } while (x[0] > SIZE || x[1] > SIZE);//while (x[0] < 0 || x[0] > SIZE || x[1] < 0 || x[1] > SIZE);
