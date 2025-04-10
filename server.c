@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+
 //Librerias sockets para linux
 #include <arpa/inet.h>
 #include <unistd.h> 
@@ -22,8 +23,11 @@
 #define SIZE 10
 #define TOTAL_SHIPS 9
 
+// Sokets
 typedef struct sockaddr_in sockaddr_in;
 typedef struct sockaddr sockaddr;
+
+// Structs
 
 typedef struct {
     int server_fd;
@@ -63,6 +67,9 @@ typedef struct {
     char path[256]; 
     ServerState *state;
 } ThreadArgs;
+
+
+// Funciones de codificación y decodificación (Envio y recibo de datos)
 
 extern inline struct ship* decode(unsigned char arr[]) {
     //printf("%X", arr);
@@ -106,48 +113,78 @@ unsigned char* encode(ship arr[]) {
     return encoded;
 }
 
+int receive_encoded_ships(int client_fd, ship ships[]) {
+    unsigned char buffer[BUFFER_SIZE];
+    int bytes = read(client_fd, buffer, BUFFER_SIZE);
+    printf("bytes: %d\n", bytes);
+    
+    if (bytes != BUFFER_SIZE) {
+        perror("Error leyendo buffer codificado");
+        return -1;
+    }
+
+
+    struct ship *decoded = decode(buffer);
+    memcpy(ships, decoded, sizeof(struct ship) * TOTAL_SHIPS);
+    return 0;
+}
+
+attack decodeAttack(unsigned char A) {
+	attack decoded;
+
+
+	decoded.posX = A & 0xF;
+	decoded.posY = (A & 0xF0) >> 4;
+
+	printf("La posX del ataque: ");
+	printf("%x", decoded.posX);
+	printf("\n");
+	printf("La posY del ataque: ");
+	return decoded;
+}
+
+unsigned char encodeAttack(attack A) {
+    unsigned char encoded;
+
+    encoded =  A.posX;
+    encoded = encoded | (A.posY << 4);
+
+    return encoded;
+}
+
+void receive_player_info(int socket, char *username, char *email,char* path) {
+    int bytes_username = recv(socket, username, 49, 0);
+    int bytes_email = recv(socket, email, 49, 0);
+
+    if (bytes_username <= 0 || bytes_email <= 0) {
+        perror("Error recibiendo datos del usuario");
+        close(socket);
+        pthread_exit(NULL);
+    }
+
+    username[bytes_username] = '\0';
+    email[bytes_email] = '\0';
+
+    printf("Usuario conectado: %s\nEmail conectado: %s\n", username, email);
+
+    char log_msg[256];
+    snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s | Email: %s", username, email);
+    safe_log(log_msg,path);
+}
+
+void send_turn_messages(int active_fd, int waiting_fd) {
+    send(active_fd, "turn", strlen("turn") + 1, 0);
+    send(waiting_fd, "wait", strlen("wait") + 1, 0);
+}
+
+// Logica del juego
+
 void initializeBoard(char board[SIZE][SIZE]) {
     for(int i = 0; i < SIZE; i++){
         for(int j = 0; j < SIZE; j++){
             board[i][j] = '~'; // Agua no revelada
         }
     }
-}
-
-void safe_log(const char* message, const char* path) {
-    int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
-    if (fd == -1) {
-        perror("open");
-        return;
-    }
-
-    if (flock(fd, LOCK_EX) == -1) {
-        perror("flock");
-        close(fd);
-        return;
-    }
-
-    FILE* log_file = fdopen(fd, "a");
-    if (!log_file) {
-        perror("fdopen");
-        close(fd);
-        return;
-    }
-
-    time_t now = time(NULL);
-    struct tm* t = localtime(&now);
-    fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] %s\n",
-            t->tm_year + 1900,
-            t->tm_mon + 1,
-            t->tm_mday,
-            t->tm_hour,
-            t->tm_min,
-            t->tm_sec,
-            message);
-
-    fflush(log_file);  
-    flock(fd, LOCK_UN); 
-    fclose(log_file);  
 }
 
 bool placeShipSize(char board[SIZE][SIZE], ship s) {
@@ -258,65 +295,6 @@ int countShips(ship ships[TOTAL_SHIPS]) {
     return total;
 }
 
-int receive_encoded_ships(int client_fd, ship ships[]) {
-    unsigned char buffer[BUFFER_SIZE];
-    int bytes = read(client_fd, buffer, BUFFER_SIZE);
-    printf("bytes: %d\n", bytes);
-    
-    if (bytes != BUFFER_SIZE) {
-        perror("Error leyendo buffer codificado");
-        return -1;
-    }
-
-
-    struct ship *decoded = decode(buffer);
-    memcpy(ships, decoded, sizeof(struct ship) * TOTAL_SHIPS);
-    return 0;
-}
-
-attack decodeAttack(unsigned char A) {
-	attack decoded;
-
-
-	decoded.posX = A & 0xF;
-	decoded.posY = (A & 0xF0) >> 4;
-
-	printf("La posX del ataque: ");
-	printf("%x", decoded.posX);
-	printf("\n");
-	printf("La posY del ataque: ");
-	return decoded;
-}
-
-unsigned char encodeAttack(attack A) {
-    unsigned char encoded;
-
-    encoded =  A.posX;
-    encoded = encoded | (A.posY << 4);
-
-    return encoded;
-}
-
-void receive_player_info(int socket, char *username, char *email,char* path) {
-    int bytes_username = recv(socket, username, 49, 0);
-    int bytes_email = recv(socket, email, 49, 0);
-
-    if (bytes_username <= 0 || bytes_email <= 0) {
-        perror("Error recibiendo datos del usuario");
-        close(socket);
-        pthread_exit(NULL);
-    }
-
-    username[bytes_username] = '\0';
-    email[bytes_email] = '\0';
-
-    printf("Usuario conectado: %s\nEmail conectado: %s\n", username, email);
-
-    char log_msg[256];
-    snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s | Email: %s", username, email);
-    safe_log(log_msg,path);
-}
-
 void initialize_session(GameSession *session, int socket, const char *username, ship *ships) {
     session->player1_fd = socket;
     strncpy(session->player1_name, username, sizeof(session->player1_name));
@@ -327,11 +305,6 @@ void initialize_session(GameSession *session, int socket, const char *username, 
                i + 1, ships[i].posX, ships[i].posY, ships[i].size,
                ships[i].dir ? "Vertical" : "Horizontal");
     }
-}
-
-void send_turn_messages(int active_fd, int waiting_fd) {
-    send(active_fd, "turn", strlen("turn") + 1, 0);
-    send(waiting_fd, "wait", strlen("wait") + 1, 0);
 }
 
 void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int attacker_fd, int defender_fd, int *hits, char *username, bool *giveUp, char* path) {
@@ -399,6 +372,42 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
             send(attacker_fd, "Agua", strlen("Agua") + 1, 0);
         }
     }
+}
+
+void safe_log(const char* message, const char* path) {
+    int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (fd == -1) {
+        perror("open");
+        return;
+    }
+
+    if (flock(fd, LOCK_EX) == -1) {
+        perror("flock");
+        close(fd);
+        return;
+    }
+
+    FILE* log_file = fdopen(fd, "a");
+    if (!log_file) {
+        perror("fdopen");
+        close(fd);
+        return;
+    }
+
+    time_t now = time(NULL);
+    struct tm* t = localtime(&now);
+    fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] %s\n",
+            t->tm_year + 1900,
+            t->tm_mon + 1,
+            t->tm_mday,
+            t->tm_hour,
+            t->tm_min,
+            t->tm_sec,
+            message);
+
+    fflush(log_file);  
+    flock(fd, LOCK_UN); 
+    fclose(log_file);  
 }
 
 void play_game(GameSession *session, char *path) {
