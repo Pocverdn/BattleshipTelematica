@@ -515,6 +515,7 @@ extern inline int setup_server(Server *server, char* IP, char* port) {
     if (server->server_fd == -1) {
         perror("Socket creation failed");
         exit(-1);
+
     }
     
     int opt = 1;
@@ -579,9 +580,7 @@ extern inline void accept_clients(Server *server,char * path) {
 
 int main(int argc, char* argv[]) {
     Server server;
-    if (setup_server(&server, argv[1], argv[2]) < 0) {
-        return 1;
-    }
+    (setup_server(&server, argv[1], argv[2]) < 0);
     
     while (true) {
         accept_clients(&server, argv[3]);
