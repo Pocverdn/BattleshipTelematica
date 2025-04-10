@@ -520,6 +520,7 @@ extern inline int setup_server(Server *server, char* IP, char* port) {
     if (server->server_fd == -1) {
         perror("Socket creation failed");
         exit(-1);
+
     }
     
     int opt = 1;
