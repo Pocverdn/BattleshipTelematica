@@ -26,11 +26,6 @@ typedef struct sockaddr_in sockaddr_in;
 typedef struct sockaddr sockaddr;
 
 typedef struct {
-    int client_socket;
-    char path[256]; 
-} ThreadArgs;
-
-typedef struct {
     int server_fd;
     sockaddr_in address;
 } Server;
@@ -48,6 +43,7 @@ typedef struct {
     unsigned char posY;  // 4 bits
 } attack;
 
+
 typedef struct {
     int player1_fd;
     int player2_fd;
@@ -57,9 +53,18 @@ typedef struct {
     struct ship ships2[TOTAL_SHIPS];
 } GameSession;
 
-GameSession game_sessions[MAX_SESSIONS];
-int current_session = 0;
-pthread_mutex_t session_mutex = PTHREAD_MUTEX_INITIALIZER;
+typedef struct {
+    GameSession sessions[MAX_SESSIONS];
+    int current_session;
+    pthread_mutex_t session_mutex;
+} ServerState;
+
+typedef struct {
+    int client_socket;
+    char path[256]; 
+    ServerState *state;
+} ThreadArgs;
+
 
 extern inline struct ship* decode(unsigned char arr[]) {
     //printf("%X", arr);
@@ -331,7 +336,7 @@ void send_turn_messages(int active_fd, int waiting_fd) {
     send(waiting_fd, "wait", strlen("wait") + 1, 0);
 }
 
-void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int attacker_fd, int defender_fd, int *hits, char *username, bool giveUp, char* path) {
+void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int attacker_fd, int defender_fd, int *hits, char *username, bool *giveUp, char* path) {
     
     fd_set read_fds;
     struct timeval timeout;
@@ -371,7 +376,7 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
             printf("%s\n", surrender_msg);
             safe_log(surrender_msg, path);
 
-            giveUp = true;
+            *giveUp = true;
         
             send(defender_fd, "Ganaste", strlen("Ganaste") + 1, 0);
         }
@@ -398,8 +403,9 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     }
 }
 
-void play_game(GameSession *session, char * path) {
-    current_session = (current_session + 1) % MAX_SESSIONS;
+void play_game(GameSession *session, char *path) {
+    // current_session = (current_session + 1) % MAX_SESSIONS;
+
     char board1[SIZE][SIZE], board2[SIZE][SIZE];
     initializeBoard(board1);
     initializeBoard(board2);
@@ -419,43 +425,43 @@ void play_game(GameSession *session, char * path) {
 
     while (hits1 < totalHits && hits2 < totalHits) {
         printf("\nNuevo turno\n");
+
         if (turn) {
             send_turn_messages(session->player1_fd, session->player2_fd);
-            handle_turn(session, board2, session->ships2 ,session->player1_fd, session->player2_fd, &hits1, session->player1_name, &giveUp1, path);
-            
-            if(giveUp1){
+            handle_turn(session, board2, session->ships2, session->player1_fd, session->player2_fd, &hits1, session->player1_name, &giveUp1, path);
+
+            if (giveUp1) {
                 break;
             }
-
-            turn = !turn;
 
         } else {
             send_turn_messages(session->player2_fd, session->player1_fd);
             handle_turn(session, board1, session->ships1, session->player2_fd, session->player1_fd, &hits2, session->player2_name, &giveUp2, path);
-            
-            if(giveUp2){
+
+            if (giveUp2) {
                 break;
             }
-
-            turn = !turn;
         }
+
+        turn = !turn;
     }
 
     if (hits1 >= totalHits) {
         send(session->player1_fd, "Ganaste", 9, 0);
         send(session->player2_fd, "Perdiste", 8, 0);
+        printf("🎉 %s ganó la partida contra %s\n", session->player1_name, session->player2_name);
     } else {
         send(session->player2_fd, "Ganaste", 9, 0);
         send(session->player1_fd, "Perdiste", 8, 0);
+        printf("🎉 %s ganó la partida contra %s\n", session->player2_name, session->player1_name);
     }
-
-    
 }
 
 void *handle_games(void *arg) {
     ThreadArgs *args = (ThreadArgs *)arg;
     int new_socket = args->client_socket;
     char *path = args->path;
+    ServerState *state = args->state;
 
     ship player_ships[TOTAL_SHIPS];
     char username[50], email[50];
@@ -468,44 +474,43 @@ void *handle_games(void *arg) {
         return NULL;
     }
 
-    pthread_mutex_lock(&session_mutex);
+    pthread_mutex_lock(&state->session_mutex);
 
     int paired = 0;
 
-    for (int i = 0; i < current_session; ++i) {
-        GameSession *session = &game_sessions[i];
+    for (int i = 0; i < state->current_session; ++i) {
+        GameSession *session = &state->sessions[i];
         if (session->player1_fd != 0 && session->player2_fd == 0) {
             
             session->player2_fd = new_socket;
             strncpy(session->player2_name, username, sizeof(session->player2_name));
             memcpy(session->ships2, player_ships, sizeof(ship) * TOTAL_SHIPS);
             paired = 1;
-    
-            pthread_mutex_unlock(&session_mutex);
-    
+
+            pthread_mutex_unlock(&state->session_mutex);
+
             printf("Jugador %s se ha emparejado con %s (sesión %d)\n",
                    username, session->player1_name, i);
-    
+
             play_game(session, path); 
             free(args);
             return NULL;
         }
     }
 
-    if (current_session < MAX_SESSIONS) {
-        GameSession *session = &game_sessions[current_session];
+    if (state->current_session < MAX_SESSIONS) {
+        GameSession *session = &state->sessions[state->current_session];
         memset(session, 0, sizeof(GameSession));
 
         initialize_session(session, new_socket, username, player_ships);
-        current_session++;
-
+        state->current_session++;
         printf("Jugador %s está esperando oponente...\n", username);
     } else {
         printf("¡Límite de sesiones alcanzado!\n");
         close(new_socket);
     }
 
-    pthread_mutex_unlock(&session_mutex);
+    pthread_mutex_unlock(&state->session_mutex);
     free(args);
     return NULL;
 }
@@ -540,11 +545,10 @@ extern inline int setup_server(Server *server, char* IP, char* port) {
     return 0;
 }
 
-extern inline void accept_clients(Server *server,char * path) {
+extern inline void accept_clients(Server *server, char *path, ServerState *state) {
     int addrlen = sizeof(server->address);
     pthread_t thread_id;
-    
-    
+
     while (1) {
         int *new_socket = malloc(sizeof(int));
         if (!new_socket) {
@@ -558,33 +562,44 @@ extern inline void accept_clients(Server *server,char * path) {
             free(new_socket);
             continue;
         }
-        ThreadArgs* args = malloc(sizeof(ThreadArgs));
-        if (args == NULL) {
+
+        ThreadArgs *args = malloc(sizeof(ThreadArgs));
+        if (!args) {
             perror("malloc");
-            exit(1);
-        }
-    
-        args->client_socket = *new_socket;
-        strncpy(args->path, path, sizeof(args->path));
-        args->path[sizeof(args->path) - 1] = '\0';
-        if (pthread_create(&thread_id, NULL, handle_games, (void*)args) != 0) {
-            perror("Thread creation failed");
             close(*new_socket);
             free(new_socket);
             continue;
         }
+
+        args->client_socket = *new_socket;
+        strncpy(args->path, path, sizeof(args->path));
+        args->path[sizeof(args->path) - 1] = '\0';
+        args->state = state;
+
+        if (pthread_create(&thread_id, NULL, handle_games, (void *)args) != 0) {
+            perror("Thread creation failed");
+            close(*new_socket);
+            free(new_socket);
+            free(args);
+            continue;
+        }
+
         pthread_detach(thread_id);
+        free(new_socket);
     }
 }
 
 int main(int argc, char* argv[]) {
     Server server;
+    ServerState state;
+    state.current_session = 0;
+    pthread_mutex_init(&state.session_mutex, NULL);
     if (setup_server(&server, argv[1], argv[2]) < 0) {
         return 1;
     }
     
     while (true) {
-        accept_clients(&server, argv[3]);
+        accept_clients(&server, argv[3], &state);
     }
 
     close(server.server_fd);

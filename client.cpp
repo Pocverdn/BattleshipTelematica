@@ -341,23 +341,6 @@ int connect_to_server(const Config& config) {
     return client_fd;
 }
 
-std::string serializeShips(ship ships[], int total) {
-    std::string result;
-
-    for (int i = 0; i < total; ++i) {
-        result += std::to_string(ships[i].posX) + " " +
-                  std::to_string(ships[i].posY) + " " +
-                  std::to_string(ships[i].size) + " " +
-                  std::to_string(ships[i].dir ? 1 : 0);
-
-        if (i < total - 1)
-            result += ";";
-    }
-
-    return result;
-}
-
-
 void* timed_in(void* att) {
 
     //printf("Thread");
@@ -369,9 +352,6 @@ void* timed_in(void* att) {
     //printf("%x", mgs[0]);
     return NULL;
 }
-
-
-
 
 void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], int totalH) {
     attack att;
@@ -509,6 +489,8 @@ void chat_with_server(int client_fd,char* path) {
     initializeBoard(board2);
     setShips(board1, ships1, username);
     showBoard(board1, ships1, board2);
+
+    std::cout << "\n\nEsperando oponente\n\n";
     char log_msg[512];
     snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s, Email conectado: %s", username.c_str(), email.c_str());
     safe_log(log_msg, path);
