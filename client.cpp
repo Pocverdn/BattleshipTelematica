@@ -386,6 +386,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             x[1] = 247;
             arg = x;
             do {
+                cin.clear();
                 pthread_t thread_id;
                 cout << "Digite las coordenadas 10 10 para rendirse\n";
                 cout << "Ingresa coordenadas Y X: ";
@@ -401,6 +402,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
                 } while ((current < tiempo) & (x[1]==247));
             pthread_cancel(thread_id);
             x[1] = (x[1] == 247 ? 0 : x[1]);
+            cin.clear();
             } while (x[0] > SIZE || x[1] > SIZE);//while (x[0] < 0 || x[0] > SIZE || x[1] < 0 || x[1] > SIZE);
 
             att.posX = x[0];
