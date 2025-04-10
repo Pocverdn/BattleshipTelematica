@@ -38,7 +38,6 @@ struct attack {
     unsigned char posY;  // 4 bits
 };
 
-
 void safe_log(const char* message, const char* path) {
     int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (fd == -1) {
@@ -481,6 +480,7 @@ void chat_with_server(int client_fd,char* path) {
     std::cout << "Enter your email: ";
     std::getline(std::cin >> std::ws, email);
     send(client_fd, email.c_str(), email.length(), 0);
+    
     char board1[SIZE][SIZE];
     char board2[SIZE][SIZE];
     ship ships1[TOTAL_SHIPS];

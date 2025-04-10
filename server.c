@@ -43,7 +43,6 @@ typedef struct {
     unsigned char posY;  // 4 bits
 } attack;
 
-
 typedef struct {
     int player1_fd;
     int player2_fd;
@@ -64,7 +63,6 @@ typedef struct {
     char path[256]; 
     ServerState *state;
 } ThreadArgs;
-
 
 extern inline struct ship* decode(unsigned char arr[]) {
     //printf("%X", arr);
