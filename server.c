@@ -593,9 +593,7 @@ int main(int argc, char* argv[]) {
     ServerState state;
     state.current_session = 0;
     pthread_mutex_init(&state.session_mutex, NULL);
-    if (setup_server(&server, argv[1], argv[2]) < 0) {
-        return 1;
-    }
+    setup_server(&server, argv[1], argv[2]);
     
     while (true) {
         accept_clients(&server, argv[3], &state);
