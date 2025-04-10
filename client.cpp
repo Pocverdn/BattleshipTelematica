@@ -11,8 +11,7 @@
 #include <limits>
 #include <pthread.h>
 #include <sys/file.h>  
-#include <fcntl.h> 
-
+#include <fcntl.h>
 using namespace std;
 
 #define BUFFER_SIZE 14
@@ -352,7 +351,7 @@ void* timed_in(void* att) {
     return NULL;
 }
 
-void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], int totalH) {
+void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], int totalH,char* path) {
     attack att;
     char buffer[32];
     int totalHits = 0;
@@ -368,10 +367,14 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
         string msg(buffer);
         trim(msg);
+        safe_log(msg.c_str(),path);
         if (msg.rfind("Impacto", 0) == 0) {
             int x, y;
             sscanf(msg.c_str(), "Impacto %d %d", &x, &y);
             board[x][y] = 'X';
+            std::ostringstream oss;
+            oss << "¡Tu enemigo te ha dado en X: " << x << " Y: " << y;
+            safe_log(oss.str().c_str(), path);
             cout << "\n💥 ¡Tu enemigo te ha dado en X: " << x << " Y: " << y << "\n\n";
             showBoard(board, ships, enemyBoard);
             //msg = "turn";
@@ -384,6 +387,9 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             void* arg;
             x[0] = 0;
             x[1] = 247;
+            std::ostringstream oss;
+            oss << "Input: X = " << x[0] << ", Y = " << x[1];
+            safe_log(oss.str().c_str(), path);
             arg = x;
             do {
                 cin.clear();
@@ -501,7 +507,7 @@ void chat_with_server(int client_fd,char* path) {
     unsigned char* serialized = encode(ships1);
     send(client_fd, serialized, 14, 0);
 
-    game(client_fd, board1, ships1, board2, totalHitsNeeded);
+    game(client_fd, board1, ships1, board2, totalHitsNeeded,path);
 
 }
 
