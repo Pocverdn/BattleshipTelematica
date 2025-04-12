@@ -212,7 +212,7 @@ struct attack decodeAttack(unsigned char A) {
 
 //El main es solo para pruebas, lo quitamos despues.
 int main(int argc, char* argv[]) {
-
+	test();
 	time_t tiempo;
 	time(&tiempo);
 	printf("%d", tiempo);
