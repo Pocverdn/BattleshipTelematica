@@ -34,19 +34,6 @@ typedef struct {
     sockaddr_in address;
 } Server;
 
-typedef struct ship {
-    unsigned char posX;  // 4 bits
-    unsigned char posY;  // 4 bits
-    unsigned char size;  // 3 bits
-    bool dir;            // 0 = horizontal, 1 = vertical
-    int impacts; 
-} ship;
-
-typedef struct {
-    unsigned char posX;  // 4 bits
-    unsigned char posY;  // 4 bits
-} attack;
-
 typedef struct {
     int player1_fd;
     int player2_fd;
@@ -68,89 +55,6 @@ typedef struct {
     ServerState *state;
 } ThreadArgs;
 
-
-// Funciones de codificación y decodificación (Envio y recibo de datos)
-
-extern inline struct ship* decode(unsigned char arr[]) {
-    //printf("%X", arr);
-    //printf("%X", arr[1]);
-    static struct ship decode[9] = { 0 };
-    unsigned char bPos = 0;
-
-    for (char i = 0; i < 9; i++) {
-
-        decode[i].posX = (arr[bPos / 8] & (0xF << bPos % 8)) >> bPos % 8;
-        bPos = bPos + 4;
-        decode[i].posY = (arr[bPos / 8] & (0xF << bPos % 8)) >> bPos % 8;
-        bPos = bPos + 4;
-        decode[i].size = (arr[bPos / 8] & (0x7 << bPos % 8)) >> bPos % 8;
-        bPos = bPos + 3;
-        decode[i].dir = (arr[bPos / 8] & (0x1 << bPos % 8)) >> bPos % 8;
-        bPos = bPos + 1;
-
-
-    }
-
-    return decode;
-}
-
-unsigned char* encode(ship arr[]) {
-    static unsigned char encoded[14] = { 0 };
-    unsigned char bPos = 0;
-
-    for (char i = 0; i < 9; i++) {
-        encoded[bPos / 8] |= (arr[i].posX << (bPos % 8));
-        bPos += 4;
-        encoded[bPos / 8] |= (arr[i].posY << (bPos % 8));
-        bPos += 4;
-        encoded[bPos / 8] |= (arr[i].size << (bPos % 8));
-        bPos += 3;
-        encoded[bPos / 8] |= (arr[i].dir << (bPos % 8));
-        bPos += 1;
-    }
-
-    //printf("El primer byte de la cadena codificada: %02X\n", encoded[0]);
-    return encoded;
-}
-
-int receive_encoded_ships(int client_fd, ship ships[]) {
-    unsigned char buffer[BUFFER_SIZE];
-    int bytes = read(client_fd, buffer, BUFFER_SIZE);
-    printf("bytes: %d\n", bytes);
-    
-    if (bytes != BUFFER_SIZE) {
-        perror("Error leyendo buffer codificado");
-        return -1;
-    }
-
-
-    struct ship *decoded = decode(buffer);
-    memcpy(ships, decoded, sizeof(struct ship) * TOTAL_SHIPS);
-    return 0;
-}
-
-attack decodeAttack(unsigned char A) {
-	attack decoded;
-
-
-	decoded.posX = A & 0xF;
-	decoded.posY = (A & 0xF0) >> 4;
-
-	printf("La posX del ataque: ");
-	printf("%x", decoded.posX);
-	printf("\n");
-	printf("La posY del ataque: ");
-	return decoded;
-}
-
-unsigned char encodeAttack(attack A) {
-    unsigned char encoded;
-
-    encoded =  A.posX;
-    encoded = encoded | (A.posY << 4);
-
-    return encoded;
-}
 
 void receive_player_info(int socket, char *username, char *email,char* path) {
     int bytes_username = recv(socket, username, 49, 0);

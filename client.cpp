@@ -25,19 +25,6 @@ struct Config {
     int PORTLINUX;
 };
 
-struct ship {
-    unsigned char posX;  // 4 bits
-    unsigned char posY;  // 4 bits
-    unsigned char size;  // 3 bits
-    bool dir;            // 0 = horizontal, 1 = vertical
-    int impacts;
-};
-
-struct attack {
-    unsigned char posX;  // 4 bits
-    unsigned char posY;  // 4 bits
-};
-
 void safe_log(const char* message, const char* path) {
     int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (fd == -1) {
@@ -72,62 +59,6 @@ void safe_log(const char* message, const char* path) {
     fflush(log_file);  
     flock(fd, LOCK_UN); 
     fclose(log_file);  
-}
-unsigned char* encode(ship arr[]) {
-    static unsigned char encoded[14] = { 0 };
-    unsigned char bPos = 0;
-
-    for (char i = 0; i < 9; i++) {
-        encoded[bPos / 8] |= (arr[i].posX << (bPos % 8));
-        bPos += 4;
-        encoded[bPos / 8] |= (arr[i].posY << (bPos % 8));
-        bPos += 4;
-        encoded[bPos / 8] |= (arr[i].size << (bPos % 8));
-        bPos += 3;
-        encoded[bPos / 8] |= (arr[i].dir << (bPos % 8));
-        bPos += 1;
-    }
-    //std::cout << "El primer byte de la cadena codificada: " << std::hex << (int)encoded[0] << std::endl;
-    return encoded;
-}
-
-ship* decode(const unsigned char arr[]) {
-    static ship decoded[9] = { 0 };
-    unsigned char bPos = 0;
-
-    for (char i = 0; i < 9; ++i) {
-        decoded[i].posX = (arr[bPos / 8] >> (bPos % 8)) & 0xF;
-        bPos += 4;
-
-        decoded[i].posY = (arr[bPos / 8] >> (bPos % 8)) & 0xF;
-        bPos += 4;
-
-        decoded[i].size = (arr[bPos / 8] >> (bPos % 8)) & 0x7;
-        bPos += 3;
-
-        decoded[i].dir = (arr[bPos / 8] >> (bPos % 8)) & 0x1;
-        bPos += 1;
-    }
-
-    return decoded;
-}
-
-unsigned char encodeAttack(struct attack A) {
-	unsigned char encoded;
-
-	encoded =  A.posX;
-	encoded = encoded | (A.posY << 4);
-
-	return encoded;
-}
-
-struct attack decodeAttack(unsigned char A) {
-	struct attack decoded;
-
-	decoded.posX = A & 0xF;
-	decoded.posY = (A & 0xF0) >> 4;
-
-	return decoded;
 }
 
 void initializeBoard(char board[SIZE][SIZE]){
