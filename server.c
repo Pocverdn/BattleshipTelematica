@@ -29,31 +29,7 @@ typedef struct sockaddr sockaddr;
 
 // Structs
 
-typedef struct {
-    int server_fd;
-    sockaddr_in address;
-} Server;
 
-typedef struct {
-    int player1_fd;
-    int player2_fd;
-    char player1_name[50];
-    char player2_name[50];
-    struct ship ships1[TOTAL_SHIPS];
-    struct ship ships2[TOTAL_SHIPS];
-} GameSession;
-
-typedef struct {
-    GameSession sessions[MAX_SESSIONS];
-    int current_session;
-    pthread_mutex_t session_mutex;
-} ServerState;
-
-typedef struct {
-    int client_socket;
-    char path[256]; 
-    ServerState *state;
-} ThreadArgs;
 
 
 
@@ -402,80 +378,9 @@ void *handle_games(void *arg) {
     return NULL;
 }
 
-extern inline int setup_server(Server *server, char* IP, char* port) {
-    server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server->server_fd == -1) {
-        perror("Socket creation failed");
-        exit(-1);
 
-    }
-    
-    int opt = 1;
-    if (setsockopt(server->server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
-        perror("Setsockopt failed");
-        exit(-1);
-    }
 
-    server->address.sin_family = AF_INET;
-    server->address.sin_addr.s_addr = inet_addr(IP);
-    server->address.sin_port = htons(atoi(port));
 
-    if (bind(server->server_fd, (sockaddr *)&server->address, sizeof(server->address)) < 0) {
-        perror("Bind failed");
-        exit(-1);
-    }
-    
-    if (listen(server->server_fd, 3) < 0) {
-        perror("Listen failed");
-        exit(-1);
-    }
-    printf("Server is listening on port %d...\n", atoi(port));
-    return 0;
-}
-
-extern inline void accept_clients(Server *server, char *path, ServerState *state) {
-    int addrlen = sizeof(server->address);
-    pthread_t thread_id;
-
-    while (1) {
-        int *new_socket = malloc(sizeof(int));
-        if (!new_socket) {
-            perror("Memory allocation failed");
-            continue;
-        }
-
-        *new_socket = accept(server->server_fd, (sockaddr *)&server->address, (socklen_t *)&addrlen);
-        if (*new_socket < 0) {
-            perror("Accept failed");
-            free(new_socket);
-            continue;
-        }
-
-        ThreadArgs *args = malloc(sizeof(ThreadArgs));
-        if (!args) {
-            perror("malloc");
-            close(*new_socket);
-            free(new_socket);
-            continue;
-        }
-
-        args->client_socket = *new_socket;
-        strncpy(args->path, path, sizeof(args->path));
-        args->path[sizeof(args->path) - 1] = '\0';
-        args->state = state;
-
-        if (pthread_create(&thread_id, NULL, handle_games, (void *)args) != 0) {
-            perror("Thread creation failed");
-            close(*new_socket);
-            free(new_socket);
-            free(args);
-            continue;
-        }
-
-        pthread_detach(thread_id);
-        free(new_socket);
-    }
-}
 
 int main(int argc, char* argv[]) {
     Server server;

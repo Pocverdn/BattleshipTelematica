@@ -20,10 +20,7 @@ using namespace std;
 #define SIZE 10
 #define TOTAL_SHIPS  9
 
-struct Config {
-    char server_ip[256];
-    int PORTLINUX;
-};
+
 
 void safe_log(const char* message, const char* path) {
     int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
@@ -215,11 +212,7 @@ int countShips(ship ships[TOTAL_SHIPS]){
     return total;
 }
 
-void trim(std::string& str) {
-    size_t first = str.find_first_not_of(' ');
-    size_t last = str.find_last_not_of(" \n\r");
-    str = str.substr(first, (last - first + 1));
-}
+
 
 
 
@@ -365,12 +358,7 @@ void chat_with_server(int client_fd,char* path) {
     std::string username;
     std::string email;
 
-    std::cout << "Enter your username: ";
-    std::getline(std::cin >> std::ws, username);
-    send(client_fd, username.c_str(), username.length(), 0);
-    std::cout << "Enter your email: ";
-    std::getline(std::cin >> std::ws, email);
-    send(client_fd, email.c_str(), email.length(), 0);
+    registration(email, username);
     
     char board1[SIZE][SIZE];
     char board2[SIZE][SIZE];
