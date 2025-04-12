@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include <sys/file.h>  
 #include <fcntl.h>
+#include <protocolo.h>
 using namespace std;
 
 #define BUFFER_SIZE 14

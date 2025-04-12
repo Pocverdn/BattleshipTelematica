@@ -4,6 +4,9 @@
 //#ifdef _WIN32
 #include <time.h>
 #include <iostream>
+#include "protocolo.h"
+
+
 /*#else
 #include <sys/time.h>
 #endif*/

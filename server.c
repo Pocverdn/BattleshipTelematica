@@ -11,7 +11,7 @@
 #include <unistd.h> 
 #include <pthread.h>
 #include <time.h>
-
+#include <protocolo.h>
 //14 bytes para envio de posiciones de barcos - 1 byte para comfirmación de disparo
 #define BUFFER_SIZE 14
 #define BUFFER_SIZE_Confirm 1
