@@ -83,6 +83,60 @@ struct attack decodeAttack(unsigned char A) {
 	return decoded;
 }
 
+void parse_config(const char* filename, char* server_ip, int* port) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        perror("Error opening config file");
+        exit(1);
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line[0] == '#' || line.empty()) continue;
+
+        std::istringstream iss(line);
+        std::string key, value;
+        if (std::getline(iss, key, '=') && std::getline(iss, value)) {
+            trim(value);
+            if (key == "serverip") {
+                strncpy(server_ip, value.c_str(), 255);
+            }
+            else if (key == "port") {
+                *port = std::atoi(value.c_str());
+            }
+        }
+    }
+
+    std::cout << "Server IP: " << server_ip << std::endl;
+    std::cout << "Port: " << port << std::endl;
+    file.close();
+}
+
+int connect_to_server(const Config& config) {
+    int client_fd;
+    sockaddr_in serv_addr{};
+
+    if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("Socket creation error");
+        return -1;
+    }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(config.PORTLINUX);
+
+    if (inet_pton(AF_INET, config.server_ip, &serv_addr.sin_addr) <= 0) {
+        perror("Invalid address/ Address not supported");
+        return -1;
+    }
+
+    if (connect(client_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+        perror("Connection Failed");
+        return -1;
+    }
+
+    return client_fd;
+}
+
 #else
 
 typedef struct ship {
@@ -177,6 +231,32 @@ unsigned char encodeAttack(attack A) {
     encoded = encoded | (A.posY << 4);
 
     return encoded;
+}
+
+
+void receive_player_info(int socket, char* username, char* email, char* path) {
+    int bytes_username = recv(socket, username, 49, 0);
+    int bytes_email = recv(socket, email, 49, 0);
+
+    if (bytes_username <= 0 || bytes_email <= 0) {
+        perror("Error recibiendo datos del usuario");
+        close(socket);
+        pthread_exit(NULL);
+    }
+
+    username[bytes_username] = '\0';
+    email[bytes_email] = '\0';
+
+    printf("Usuario conectado: %s\nEmail conectado: %s\n", username, email);
+
+    char log_msg[256];
+    snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s | Email: %s", username, email);
+    safe_log(log_msg, path);
+}
+
+void send_turn_messages(int active_fd, int waiting_fd) {
+    send(active_fd, "turn", strlen("turn") + 1, 0);
+    send(waiting_fd, "wait", strlen("wait") + 1, 0);
 }
 
 #endif

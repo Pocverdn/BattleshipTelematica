@@ -56,30 +56,6 @@ typedef struct {
 } ThreadArgs;
 
 
-void receive_player_info(int socket, char *username, char *email,char* path) {
-    int bytes_username = recv(socket, username, 49, 0);
-    int bytes_email = recv(socket, email, 49, 0);
-
-    if (bytes_username <= 0 || bytes_email <= 0) {
-        perror("Error recibiendo datos del usuario");
-        close(socket);
-        pthread_exit(NULL);
-    }
-
-    username[bytes_username] = '\0';
-    email[bytes_email] = '\0';
-
-    printf("Usuario conectado: %s\nEmail conectado: %s\n", username, email);
-
-    char log_msg[256];
-    snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s | Email: %s", username, email);
-    safe_log(log_msg,path);
-}
-
-void send_turn_messages(int active_fd, int waiting_fd) {
-    send(active_fd, "turn", strlen("turn") + 1, 0);
-    send(waiting_fd, "wait", strlen("wait") + 1, 0);
-}
 
 // Logica del juego
 

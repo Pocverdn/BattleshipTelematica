@@ -221,55 +221,7 @@ void trim(std::string& str) {
     str = str.substr(first, (last - first + 1));
 }
 
-void parse_config(const char* filename, char* server_ip, int* port) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        perror("Error opening config file");
-        exit(1);
-    }
 
-    std::string line;
-    while (std::getline(file, line)) {
-        if (line[0] == '#' || line.empty()) continue;
-
-        std::istringstream iss(line);
-        std::string key, value;
-        if (std::getline(iss, key, '=') && std::getline(iss, value)) {
-            trim(value);
-            if (key == "serverip") {
-                strncpy(server_ip, value.c_str(), 255);
-            } else if (key == "port") {
-                *port = std::atoi(value.c_str());
-            }
-        }
-    }
-    file.close();
-}
-
-int connect_to_server(const Config& config) {
-    int client_fd;
-    sockaddr_in serv_addr{};
-
-    if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("Socket creation error");
-        return -1;
-    }
-
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(config.PORTLINUX);
-
-    if (inet_pton(AF_INET, config.server_ip, &serv_addr.sin_addr) <= 0) {
-        perror("Invalid address/ Address not supported");
-        return -1;
-    }
-
-    if (connect(client_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-        perror("Connection Failed");
-        return -1;
-    }
-
-    return client_fd;
-}
 
 void* timed_in(void* att) {
 
@@ -459,8 +411,7 @@ int main(int argc, char* argv[]) {
     parse_config("address.config", config.server_ip, &config.PORTLINUX);
 
     
-    std::cout << "Server IP: " << config.server_ip << std::endl;
-    std::cout << "Port: " << config.PORTLINUX << std::endl;
+
 
     while(true){
 
