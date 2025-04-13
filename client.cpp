@@ -313,10 +313,6 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             }
 
             trim(msg = string(buffer));
-
-
-            cout << "Mensaje" <<"\n\n";
-            cout << msg <<"\n\n";
             
             if (msg == "timeout") {
                 cout << "⏰ Te quedaste sin tiempo para atacar. Pierdes el turno.\n\n";

@@ -24,12 +24,7 @@
 
 // Sokets
 
-
 // Structs
-
-
-
-
 
 // Logica del juego
 

@@ -4,8 +4,6 @@
 #include <arpa/inet.h>
 #include <unistd.h> 
 
-
-
 #define SIZE 10
 #define TOTAL_SHIPS 9
 #define BUFFER_SIZE 14
@@ -247,7 +245,7 @@ void encode(const ship arr[], unsigned char* encoded) {
 int receive_encoded_ships(int client_fd, ship ships[]) {
     unsigned char buffer[BUFFER_SIZE];
     int bytes = read(client_fd, buffer, BUFFER_SIZE);
-    printf("bytes: %d\n", bytes);
+    //printf("bytes: %d\n", bytes);
     
     if (bytes != BUFFER_SIZE) {
         perror("Error leyendo buffer codificado");
@@ -268,10 +266,10 @@ attack decodeAttack(unsigned char A) {
 	decoded.posX = A & 0xF;
 	decoded.posY = (A & 0xF0) >> 4;
 
-	printf("La posX del ataque: ");
-	printf("%x", decoded.posX);
-	printf("\n");
-	printf("La posY del ataque: ");
+	//printf("La posX del ataque: ");
+	//printf("%x", decoded.posX);
+	//printf("\n");
+	//printf("La posY del ataque: ");
 	return decoded;
 }
 
