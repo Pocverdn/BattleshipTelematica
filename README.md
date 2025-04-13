@@ -1,7 +1,7 @@
 # BattleshipTelematica
-# Como correr el programa.
+## Como correr el programa.
 
-## client.out
+### client.out
 El programa esta diseñado para funcionar con el sistema operativo linux.
 Se necesita un archivo address.config para decirle al cliente donde se va a conectar.
 La estructura de este archivo debe ser:
@@ -13,7 +13,7 @@ El cliente requiere requiere un log, este puede crear un log si no existe uno, p
 
 **./client.out path/log**
 
-## server.out
+### server.out
 Al igual que el cliente requiere que se le espesifique donde queda el archivo de log, si no encunetra alguno, el programa crea uno en esa ubicación.
 Ademas de esto el servidor necesita que se le da la IP y el puerto donde se va a hostiar por consola.
 La estructura es, IP, puerto y luego el log:
