@@ -358,7 +358,7 @@ void chat_with_server(int client_fd,char* path) {
     std::string username;
     std::string email;
 
-    registration(email, username);
+    registration(email, username, client_fd);
     
     char board1[SIZE][SIZE];
     char board2[SIZE][SIZE];

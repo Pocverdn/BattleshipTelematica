@@ -149,7 +149,7 @@ int connect_to_server(const Config& config) {
     return client_fd;
 }
 
-void registration( std::string &email, std::string &username) {
+void registration( std::string &email, std::string &username, int client_fd) {
     //char buffer[BUFFER_SIZE] = { 0 };
     std::cout << "Enter your username: ";
     std::getline(std::cin >> std::ws, username);
@@ -163,11 +163,26 @@ void registration( std::string &email, std::string &username) {
 
 #else
 
+typedef struct sockaddr_in sockaddr_in;
+typedef struct sockaddr sockaddr;
 
 typedef struct {
     int server_fd;
     sockaddr_in address;
 } Server;
+
+typedef struct ship {
+    unsigned char posX;  // 4 bits
+    unsigned char posY;  // 4 bits
+    unsigned char size;  // 3 bits
+    bool dir;            // 0 = horizontal, 1 = vertical
+    int impacts; 
+} ship;
+
+typedef struct {
+    unsigned char posX;  // 4 bits
+    unsigned char posY;  // 4 bits
+} attack;
 
 typedef struct {
     int player1_fd;
@@ -189,19 +204,6 @@ typedef struct {
     char path[256];
     ServerState* state;
 } ThreadArgs;
-
-typedef struct ship {
-    unsigned char posX;  // 4 bits
-    unsigned char posY;  // 4 bits
-    unsigned char size;  // 3 bits
-    bool dir;            // 0 = horizontal, 1 = vertical
-    int impacts; 
-} ship;
-
-typedef struct {
-    unsigned char posX;  // 4 bits
-    unsigned char posY;  // 4 bits
-} attack;
 
 extern inline struct ship* decode(unsigned char arr[]) {
     //printf("%X", arr);
@@ -226,8 +228,7 @@ extern inline struct ship* decode(unsigned char arr[]) {
     return decode;
 }
 
-typedef struct sockaddr_in sockaddr_in;
-typedef struct sockaddr sockaddr;
+
 
 unsigned char* encode(ship arr[]) {
     static unsigned char encoded[14] = { 0 };
@@ -311,50 +312,6 @@ void receive_player_info(int socket, char* username, char* email, char* path) {
 void send_turn_messages(int active_fd, int waiting_fd) {
     send(active_fd, "turn", strlen("turn") + 1, 0);
     send(waiting_fd, "wait", strlen("wait") + 1, 0);
-}
-
-extern inline void accept_clients(Server* server, char* path, ServerState* state) {
-    int addrlen = sizeof(server->address);
-    pthread_t thread_id;
-
-    while (1) {
-        int* new_socket = malloc(sizeof(int));
-        if (!new_socket) {
-            perror("Memory allocation failed");
-            continue;
-        }
-
-        *new_socket = accept(server->server_fd, (sockaddr*)&server->address, (socklen_t*)&addrlen);
-        if (*new_socket < 0) {
-            perror("Accept failed");
-            free(new_socket);
-            continue;
-        }
-
-        ThreadArgs* args = malloc(sizeof(ThreadArgs));
-        if (!args) {
-            perror("malloc");
-            close(*new_socket);
-            free(new_socket);
-            continue;
-        }
-
-        args->client_socket = *new_socket;
-        strncpy(args->path, path, sizeof(args->path));
-        args->path[sizeof(args->path) - 1] = '\0';
-        args->state = state;
-
-        if (pthread_create(&thread_id, NULL, handle_games, (void*)args) != 0) {
-            perror("Thread creation failed");
-            close(*new_socket);
-            free(new_socket);
-            free(args);
-            continue;
-        }
-
-        pthread_detach(thread_id);
-        free(new_socket);
-    }
 }
 
 extern inline int setup_server(Server* server, char* IP, char* port) {

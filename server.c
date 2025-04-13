@@ -377,7 +377,49 @@ void *handle_games(void *arg) {
 }
 
 
+extern inline void accept_clients(Server* server, char* path, ServerState* state) {
+    int addrlen = sizeof(server->address);
+    pthread_t thread_id;
 
+    while (1) {
+        int* new_socket = malloc(sizeof(int));
+        if (!new_socket) {
+            perror("Memory allocation failed");
+            continue;
+        }
+
+        *new_socket = accept(server->server_fd, (sockaddr*)&server->address, (socklen_t*)&addrlen);
+        if (*new_socket < 0) {
+            perror("Accept failed");
+            free(new_socket);
+            continue;
+        }
+
+        ThreadArgs* args = malloc(sizeof(ThreadArgs));
+        if (!args) {
+            perror("malloc");
+            close(*new_socket);
+            free(new_socket);
+            continue;
+        }
+
+        args->client_socket = *new_socket;
+        strncpy(args->path, path, sizeof(args->path));
+        args->path[sizeof(args->path) - 1] = '\0';
+        args->state = state;
+
+        if (pthread_create(&thread_id, NULL, handle_games, (void*)args) != 0) {
+            perror("Thread creation failed");
+            close(*new_socket);
+            free(new_socket);
+            free(args);
+            continue;
+        }
+
+        pthread_detach(thread_id);
+        free(new_socket);
+    }
+}
 
 
 int main(int argc, char* argv[]) {
