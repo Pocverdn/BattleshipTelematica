@@ -264,9 +264,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             void* arg;
             x[0] = 0;
             x[1] = 247;
-            std::ostringstream oss;
-            oss << "Input: X = " << x[0] << ", Y = " << x[1];
-            safe_log(oss.str().c_str(), path);
+
             arg = x;
             do {
                 cin.clear();
@@ -290,6 +288,9 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             att.posX = x[0];
             att.posY = x[1];
+            std::ostringstream oss;
+            oss << "Input: X = " << x[0] << ", Y = " << x[1];
+            safe_log(oss.str().c_str(), path);
             delete x;
             unsigned char serialized = encodeAttack(att);
 
