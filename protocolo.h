@@ -3,12 +3,13 @@
 #include <string.h>
 
 
-#define BUFFER_SIZE 14
-#define BUFFER_SIZE_Confirm 1
+
 
 #define SIZE 10
 #define TOTAL_SHIPS 9
-
+#define BUFFER_SIZE 14
+#define MAX_SESSIONS 10
+#define BUFFER_SIZE_Confirm 1
 
 #ifdef __cplusplus
 //Aca lo de C++
@@ -149,6 +150,7 @@ int connect_to_server(const Config& config) {
 }
 
 void registration( std::string &email, std::string &username) {
+    //char buffer[BUFFER_SIZE] = { 0 };
     std::cout << "Enter your username: ";
     std::getline(std::cin >> std::ws, username);
     send(client_fd, username.c_str(), username.length(), 0);

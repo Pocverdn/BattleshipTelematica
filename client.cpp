@@ -15,7 +15,7 @@
 #include "protocolo.h"
 using namespace std;
 
-#define BUFFER_SIZE 14
+//#define BUFFER_SIZE 14
 
 #define SIZE 10
 #define TOTAL_SHIPS  9
@@ -354,7 +354,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 }
 
 void chat_with_server(int client_fd,char* path) {
-    char buffer[BUFFER_SIZE] = {0};
+    
     std::string username;
     std::string email;
 
