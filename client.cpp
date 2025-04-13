@@ -277,7 +277,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
                 time_t tiempo;
                 time_t current;
                 time(&tiempo);
-                tiempo = tiempo + 27;
+                tiempo = tiempo + 31;
                 do {
 
                     time(&current);
