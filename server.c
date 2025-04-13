@@ -23,8 +23,7 @@
 #define TOTAL_SHIPS 9
 
 // Sokets
-typedef struct sockaddr_in sockaddr_in;
-typedef struct sockaddr sockaddr;
+
 
 // Structs
 

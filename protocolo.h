@@ -226,6 +226,9 @@ extern inline struct ship* decode(unsigned char arr[]) {
     return decode;
 }
 
+typedef struct sockaddr_in sockaddr_in;
+typedef struct sockaddr sockaddr;
+
 unsigned char* encode(ship arr[]) {
     static unsigned char encoded[14] = { 0 };
     unsigned char bPos = 0;
