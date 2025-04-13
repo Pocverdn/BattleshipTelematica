@@ -245,7 +245,7 @@ void safe_log(const char* message, const char* path) {
     if (!log_file) {
         perror("fdopen");
         close(fd);
-        return;
+        return; 
     }
 
     time_t now = time(NULL);
