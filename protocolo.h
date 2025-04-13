@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <stdio.h>
 #include <string.h>
 
@@ -38,8 +38,8 @@ struct attack {
     unsigned char posY;
 };
 
-inline unsigned char* encode(ship arr[]) {
-    static unsigned char encoded[14] = { 0 };
+inline unsigned char* encode(ship arr[]) {     //Podemos añadir una variable "K" para que la cantidad de barcos sea dynamica.
+    static unsigned char encoded[14] = { 0 }; //Con variable dynamica el tama�o de este char seria (Roof)K*3/2. cada barco es de 12 bits, y lo que mandamos esta en bytes, lo mismo aplica para las otras funciones.
     unsigned char bPos = 0;
 
     for (char i = 0; i < 9; i++) {
@@ -124,7 +124,7 @@ void parse_config(const char* filename, char* server_ip, int* port) {
     file.close();
 }
 
-int connect_to_server(const Config& config) {
+inline int connect_to_server(const Config& config) {
     int client_fd;
     sockaddr_in serv_addr{};
 
@@ -149,7 +149,7 @@ int connect_to_server(const Config& config) {
     return client_fd;
 }
 
-void registration( std::string &email, std::string &username, int client_fd) {
+inline void registration( std::string &email, std::string &username, int client_fd) {
     //char buffer[BUFFER_SIZE] = { 0 };
     std::cout << "Enter your username: ";
     std::getline(std::cin >> std::ws, username);
