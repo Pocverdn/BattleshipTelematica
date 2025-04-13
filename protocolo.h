@@ -149,7 +149,7 @@ int connect_to_server(const Config& config) {
     return client_fd;
 }
 
-void registration( std::string &email, std::string &username) {
+inline void registration( std::string &email, std::string &username) {
     //char buffer[BUFFER_SIZE] = { 0 };
     std::cout << "Enter your username: ";
     std::getline(std::cin >> std::ws, username);
