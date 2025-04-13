@@ -254,7 +254,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             safe_log(oss.str().c_str(), path);
             cout << "\n💥 ¡Tu enemigo te ha dado en X: " << x << " Y: " << y << "\n\n";
             showBoard(board, ships, enemyBoard);
-            //msg = "turn";
+            msg = "turn";
         }
         if (msg == "turn") {
             cout << "\n>>> Es tu turno de atacar.\n";
