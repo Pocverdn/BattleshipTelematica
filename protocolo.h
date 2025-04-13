@@ -1,7 +1,8 @@
 ﻿#pragma once
 #include <stdio.h>
 #include <string.h>
-
+#include <arpa/inet.h>
+#include <unistd.h> 
 
 
 
@@ -12,6 +13,10 @@
 #define BUFFER_SIZE_Confirm 1
 
 #ifdef __cplusplus
+#include <iostream>
+#include <sstream>
+#include <cstring>
+#include <cstdlib>
 //Aca lo de C++
 
 struct Config {
@@ -162,6 +167,7 @@ inline void registration( std::string &email, std::string &username, int client_
 }
 
 #else
+#include <stdbool.h>
 
 typedef struct sockaddr_in sockaddr_in;
 typedef struct sockaddr sockaddr;
