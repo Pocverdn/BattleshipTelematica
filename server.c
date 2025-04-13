@@ -228,6 +228,8 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     }
 }
 
+/*
+
 void safe_log(const char* message, const char* path) {
     int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (fd == -1) {
@@ -263,6 +265,9 @@ void safe_log(const char* message, const char* path) {
     flock(fd, LOCK_UN); 
     fclose(log_file);  
 }
+*/
+
+
 
 void play_game(GameSession *session, char *path) {
     // current_session = (current_session + 1) % MAX_SESSIONS;

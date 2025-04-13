@@ -43,8 +43,8 @@ struct attack {
     unsigned char posY;
 };
 
-inline unsigned char* encode(ship arr[]) {     //Podemos añadir una variable "K" para que la cantidad de barcos sea dynamica.
-    static unsigned char encoded[14] = { 0 }; //Con variable dynamica el tama�o de este char seria (Roof)K*3/2. cada barco es de 12 bits, y lo que mandamos esta en bytes, lo mismo aplica para las otras funciones.
+void encode(const ship arr[], unsigned char* encoded) {
+    memset(encoded, 0, 14); // Limpia el buffer antes de usarlo
     unsigned char bPos = 0;
 
     for (char i = 0; i < 9; i++) {
@@ -57,12 +57,10 @@ inline unsigned char* encode(ship arr[]) {     //Podemos añadir una variable "K
         encoded[bPos / 8] |= (arr[i].dir << (bPos % 8));
         bPos += 1;
     }
-
-    return encoded;
 }
 
-inline ship* decode(const unsigned char arr[]) {
-    static ship decoded[9] = { 0 };
+void decode(const unsigned char* arr, ship* decoded) {
+    memset(decoded, 0, sizeof(ship) * 9); // Limpia el buffer antes de usarlo
     unsigned char bPos = 0;
 
     for (char i = 0; i < 9; ++i) {
@@ -78,8 +76,6 @@ inline ship* decode(const unsigned char arr[]) {
         decoded[i].dir = (arr[bPos / 8] >> (bPos % 8)) & 0x1;
         bPos += 1;
     }
-
-    return decoded;
 }
 
 unsigned char encodeAttack(struct attack A) {
@@ -211,33 +207,29 @@ typedef struct {
     ServerState* state;
 } ThreadArgs;
 
-extern inline struct ship* decode(unsigned char arr[]) {
-    //printf("%X", arr);
-    //printf("%X", arr[1]);
-    static struct ship decode[9] = { 0 };
+void decode(const unsigned char* arr, ship* decoded) {
+    memset(decoded, 0, sizeof(ship) * 9); // Limpia el buffer antes de usarlo
     unsigned char bPos = 0;
 
-    for (char i = 0; i < 9; i++) {
+    for (char i = 0; i < 9; ++i) {
+        decoded[i].posX = (arr[bPos / 8] >> (bPos % 8)) & 0xF;
+        bPos += 4;
 
-        decode[i].posX = (arr[bPos / 8] & (0xF << bPos % 8)) >> bPos % 8;
-        bPos = bPos + 4;
-        decode[i].posY = (arr[bPos / 8] & (0xF << bPos % 8)) >> bPos % 8;
-        bPos = bPos + 4;
-        decode[i].size = (arr[bPos / 8] & (0x7 << bPos % 8)) >> bPos % 8;
-        bPos = bPos + 3;
-        decode[i].dir = (arr[bPos / 8] & (0x1 << bPos % 8)) >> bPos % 8;
-        bPos = bPos + 1;
+        decoded[i].posY = (arr[bPos / 8] >> (bPos % 8)) & 0xF;
+        bPos += 4;
 
+        decoded[i].size = (arr[bPos / 8] >> (bPos % 8)) & 0x7;
+        bPos += 3;
 
+        decoded[i].dir = (arr[bPos / 8] >> (bPos % 8)) & 0x1;
+        bPos += 1;
     }
-
-    return decode;
 }
 
 
 
-unsigned char* encode(ship arr[]) {
-    static unsigned char encoded[14] = { 0 };
+void encode(const ship arr[], unsigned char* encoded) {
+    memset(encoded, 0, 14); // Limpia el buffer antes de usarlo
     unsigned char bPos = 0;
 
     for (char i = 0; i < 9; i++) {
@@ -250,9 +242,6 @@ unsigned char* encode(ship arr[]) {
         encoded[bPos / 8] |= (arr[i].dir << (bPos % 8));
         bPos += 1;
     }
-
-    //printf("El primer byte de la cadena codificada: %02X\n", encoded[0]);
-    return encoded;
 }
 
 int receive_encoded_ships(int client_fd, ship ships[]) {
@@ -265,9 +254,10 @@ int receive_encoded_ships(int client_fd, ship ships[]) {
         return -1;
     }
 
+    memset(ships, 0, sizeof(ship) * TOTAL_SHIPS);
 
-    struct ship *decoded = decode(buffer);
-    memcpy(ships, decoded, sizeof(struct ship) * TOTAL_SHIPS);
+    decode(buffer, ships);
+
     return 0;
 }
 
@@ -292,6 +282,44 @@ unsigned char encodeAttack(attack A) {
     encoded = encoded | (A.posY << 4);
 
     return encoded;
+}
+
+
+
+void safe_log(const char* message, const char* path) {
+    int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (fd == -1) {
+        perror("open");
+        return;
+    }
+
+    if (flock(fd, LOCK_EX) == -1) {
+        perror("flock");
+        close(fd);
+        return;
+    }
+
+    FILE* log_file = fdopen(fd, "a");
+    if (!log_file) {
+        perror("fdopen");
+        close(fd);
+        return; 
+    }
+
+    time_t now = time(NULL);
+    struct tm* t = localtime(&now);
+    fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] %s\n",
+            t->tm_year + 1900,
+            t->tm_mon + 1,
+            t->tm_mday,
+            t->tm_hour,
+            t->tm_min,
+            t->tm_sec,
+            message);
+
+    fflush(log_file);  
+    flock(fd, LOCK_UN); 
+    fclose(log_file);  
 }
 
 

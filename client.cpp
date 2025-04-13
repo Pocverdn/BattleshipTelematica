@@ -254,7 +254,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             safe_log(oss.str().c_str(), path);
             cout << "\n💥 ¡Tu enemigo te ha dado en X: " << x << " Y: " << y << "\n\n";
             showBoard(board, ships, enemyBoard);
-            msg = "turn";
+            //msg = "turn";
         }
         if (msg == "turn") {
             cout << "\n>>> Es tu turno de atacar.\n";
@@ -315,8 +315,8 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             trim(msg = string(buffer));
 
 
-            //cout << "Mensaje" <<"\n\n";
-            //cout << msg <<"\n\n";
+            cout << "Mensaje" <<"\n\n";
+            cout << msg <<"\n\n";
             
             if (msg == "timeout") {
                 cout << "⏰ Te quedaste sin tiempo para atacar. Pierdes el turno.\n\n";
@@ -377,8 +377,9 @@ void chat_with_server(int client_fd,char* path) {
 
     int totalHitsNeeded = countShips(ships1);
 
-    unsigned char* serialized = encode(ships1);
-    send(client_fd, serialized, 14, 0);
+    unsigned char serialized[14];
+    encode(ships1, serialized);
+    send(client_fd, serialized, sizeof(serialized), 0);
 
     game(client_fd, board1, ships1, board2, totalHitsNeeded,path);
 
