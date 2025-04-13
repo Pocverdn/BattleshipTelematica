@@ -5,16 +5,19 @@
 El programa esta diseñado para funcionar con el sistema operativo linux.
 Se necesita un archivo address.config para decirle al cliente donde se va a conectar.
 La estructura de este archivo debe ser:
+
 **serverip= IP a conectarse**
 **port=el puerto.**
 
 El cliente requiere requiere un log, este puede crear un log si no existe uno, pero aun necesita que se le espesifique donde crearlo.
+
 **./client.out path/log**
 
 ## server.out
 Al igual que el cliente requiere que se le espesifique donde queda el archivo de log, si no encunetra alguno, el programa crea uno en esa ubicación.
 Ademas de esto el servidor necesita que se le da la IP y el puerto donde se va a hostiar por consola.
 La estructura es, IP, puerto y luego el log:
+
 **./server.out IP puerto path/log**
 
 # Introducción
