@@ -270,7 +270,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             arg = x;
             do {
                 cin.clear();
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                //std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
                 pthread_t thread_id;
                 cout << "Digite las coordenadas 10 10 para rendirse\n";
                 cout << "Ingresa coordenadas Y X: ";
@@ -278,7 +278,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
                 time_t tiempo;
                 time_t current;
                 time(&tiempo);
-                tiempo = tiempo + 31;
+                tiempo = tiempo + 27;
                 do {
 
                     time(&current);
