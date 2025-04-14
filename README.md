@@ -132,6 +132,59 @@ Dicho código como se mencionó anteriormente realiza todas las operaciones de c
 
 ### Log
 
-El long es una función que esta tanto en servidor como en cliente, como su mismo nombre lo indica guarda una registro de todas las acciones hechas dentro del juego, con la diferencia que el cliente guarda las acciones hechas por el jugador-usuario mientras que el servidor guarda el inicio tanto el inicio de sesion de los jugadores, estado del juego, acciones hechas por ambos jugadores, etc.
+El log es una función que está tanto en servidor como en cliente, guarda un registro de todas las acciones hechas dentro del juego, con la diferencia que el cliente guarda las acciones hechas por el jugador-usuario mientras que el servidor guarda tanto el inicio de sesión de los jugadores, estado del juego, acciones hechas por ambos jugadores, etc.
 
     safe_log: Abre, bloquea y escribe de forma segura un mensaje con marca de tiempo en el archivo de log especificado.
+
+En general, el log sigue la estructura de *<date> <time> <clientIP> <query> <responseIP>*
+
+• date: indica la fecha en que se efectuó la transacción.
+
+• time: indica la hora en que se realizó la transacción.
+
+• clientIP: la dirección IP del cliente que realiza la petición.
+
+• query: indica el tipo de mensaje que se está realizando.
+
+• response: mensaje de respuesta del servidor.
+
+
+# Aspectos logrados y No logrados:
+
+En cuanto a las metas conseguidas según las rúbricas puestas en clases, hemos conseguido lo siguiente:
+
+## Metas conseguidas
+
+### Cliente:
+    El tablero propio con la posición de los barcos del jugador.
+    El tablero del oponente mostrando los disparos realizados y sus resultados.
+    Información del estado actual del juego.
+    Colocar sus barcos al inicio de la partida (puede ser manual o aleatoria).
+    Seleccionar coordenadas para disparar durante su turno.
+    Ver el historial de movimientos de la partida.
+    Rendirse o solicitar un nuevo juego.
+    Tablero propio: Mostrar la posición de los barcos y los disparos recibidos.
+    Tablero del oponente: Mostrar los disparos realizados y sus resultados.
+    Conectarse al servidor e implementar el protocolo de comunicación.
+    Gestionar errores y desconexiones de manera adecuada.
+
+### Servidor:
+    Aceptar conexiones de múltiples clientes simultáneamente.
+    Emparejar jugadores para iniciar partidas.
+    Mantener el estado del juego para cada partida activa.
+    Validar todas las acciones de los jugadores según las reglas del juego.
+    Notificar a los clientes sobre el resultado de sus acciones y los cambios en el estado del juego.
+    Gestionar turnos entre los jugadores.
+    Detectar y gestionar desconexiones de clientes.
+    Registrar en un archivo de log todas las acciones importantes que ocurren en el servidor.
+    Implementar un temporizador para limitar la duración de cada turno a 30 segundos.
+    Finalizar las partidas cuando se cumpla la condición de victoria.
+
+## Metas no conseguidas:
+
+### Cliente:
+    No podemos actualizar el tiempo en el cliente, además de que el turno no pasa.
+
+### Servidor:
+    Todos los requisitos fueron cumplidos.
+
