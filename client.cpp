@@ -258,9 +258,10 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             attack atk = decodeAttack(buffer[1]);
             board[atk.posX][atk.posY] = 'X';
             std::ostringstream oss;
-            oss << "¡Tu enemigo te ha dado en X: " << atk.posX << " Y: " << atk.posY;
+            oss << "¡Tu enemigo te ha dado en X: " << (short)atk.posX << " Y: " << (short)atk.posY;
             safe_log(oss.str().c_str(), path);
-            cout << "\n💥 ¡Tu enemigo te ha dado en X: " << atk.posX << " Y: " << atk.posY << "\n\n";
+
+            cout << "\n💥 ¡Tu enemigo te ha dado en X: " << (short)atk.posX << " Y: " << (short)atk.posY << "\n\n";
             showBoard(board, ships, enemyBoard);
             //msg = "turn";
         }
