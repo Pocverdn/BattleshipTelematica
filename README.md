@@ -7,6 +7,7 @@ Se necesita un archivo address.config para decirle al cliente donde se va a cone
 La estructura de este archivo debe ser:
 
 **serverip= IP a conectarse**
+
 **port=el puerto.**
 
 El cliente requiere requiere un log, este puede crear un log si no existe uno, pero aun necesita que se le espesifique donde crearlo.
