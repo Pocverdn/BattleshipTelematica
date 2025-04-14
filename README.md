@@ -28,13 +28,13 @@ El trabajo trata de un juego de batalla naval, donde un servidor desarrollado en
     Disparar a las casillas
     Recibir notificaciones de acierto, agua o hundimiento
 
-Este juego ha sido diseñado para poder correr en máquinas con un sistema operativo LINUX y ha sido probado por medio del servicio de nube de AWS (Amazon Web Service), utilizando además sockets, threads y un sistema de codificación desarrollado por el equipo para crear los diferentes protocolos que se utilizaran para enviar los datos de las naves, ataques y banderas, todo con el objetivo de hacer el transporte de datos lo más preciso posible en cuanto a cantidad de bytes enviados se refiere.
+Este juego ha sido diseñado para poder correr en máquinas con un sistema operativo LINUX y ha sido probado por medio del servicio de nube de AWS (Amazon Web Service), utilizando además sockets, threads y un sistema de codificación desarrollado por el equipo para crear el protocolo que se utilizara para enviar los datos de las naves, ataques y banderas, todo con el objetivo de hacer el transporte de datos lo más preciso posible en cuanto a cantidad de bytes enviados se refiere.
 
 Adicionalmente, tanto cliente como servidor mantienen un registro de todas las acciones hechas durante sus ejecuciones, es decir, los disparos, ingresos de sección, quién gano o perdió, etc.
 
 # Desarrollo
 
-El desarrollo del proyecto se divide en dos secciones, la primera siendo el código de servidor hecho en C, en el cual se manejan las conexiones entre los diferentes clientes, que piden y envían datos a este para ser procesadas y enviadas tanto al mismo cliente como al del otro jugador, la segunda parte es el desarrollo del código cliente en C++, en el cual se maneja tanto el envío recibo de datos por parte del servidor, como la lógica interna del juego, a continuación explicaremos que contienen estos dos códigos y con que otros archivos van ligados.
+El desarrollo del proyecto se divide en tres secciones, la primera siendo el código de servidor hecho en C, en el cual se manejan las conexiones entre los diferentes clientes, que piden y envían datos a este para ser procesadas y enviadas tanto al mismo cliente como al del otro jugador, la segunda parte es el desarrollo del código cliente en C++, en el cual se maneja tanto el envío recibo de datos por parte del servidor, como la lógica interna del juego, por ultimo se maneja en un archivo .h todas las funciones del protocolo, es decir los codificadores y decodificadores necesarios para enviar los datos. a continuación explicaremos que contienen estos tres códigos y con que otros archivos van ligados.
 
 ## Server.c
 
@@ -101,6 +101,37 @@ Cliente de igual forma que server, contiene las funciones relacionadas con la lo
     trim: Elimina espacios y saltos de línea de los extremos de una cadena.
     
     parse_config: Lee IP y puerto del servidor desde un archivo de configuración (.conf).
-      
 
+
+
+## Protocolo.h
+
+Dicho código como se mencionó anteriormente realiza todas las operaciones de codificar y decodificar los datos que se enviaran tanto desde cliente a servidor como de servidor a cliente, de esta manera garantizando un uso más eficiente del almacenamiento como del transporte, este código está tanto adaptado para funcionar en C como en C++, para de esta forma funcionar como un intermediario entre las dos (Interfaz), de igual manera se encarga de manejar el estado del servidor y las sesiones entre jugadores así como almacenar los datos importantes tales como posiciones de los barcos o estado del tablero.
+
+![image](https://github.com/user-attachments/assets/d4a827b9-f9dd-496d-9782-c8a36f3a5be1)
+
+
+    decode: Extrae datos de barcos comprimidos en bits y los guarda dentro del struct ship.
     
+    encode: Codifica los datos de barcos dentro del struct ship en un arreglo compacto de bits.
+    
+    receive_encoded_ships: Lee datos codificados desde un socket, los decodifica y los guarda en un arreglo de barcos.
+    
+    decodeAttack: Extrae las coordenadas x y y de un ataque desde un solo byte codificado.
+    
+    encodeAttack: Codifica las coordenadas de un ataque (x, y) en un solo byte.
+
+    parse_config: Lee un archivo de configuración y extrae la IP del servidor y el puerto.
+
+    connect_to_server: Crea un socket y se conecta al servidor usando la IP y puerto dados.
+
+    send_turn_messages: Informa a los jugadores cuál debe jugar ("turn") y cuál debe esperar ("wait").
+
+    setup_server: Configura y arranca el servidor en la IP y puerto especificados, dejándolo listo para aceptar conexiones.
+
+
+### Log
+
+El long es una función que esta tanto en servidor como en cliente, como su mismo nombre lo indica guarda una registro de todas las acciones hechas dentro del juego, con la diferencia que el cliente guarda las acciones hechas por el jugador-usuario mientras que el servidor guarda el inicio tanto el inicio de sesion de los jugadores, estado del juego, acciones hechas por ambos jugadores, etc.
+
+    safe_log: Abre, bloquea y escribe de forma segura un mensaje con marca de tiempo en el archivo de log especificado.
