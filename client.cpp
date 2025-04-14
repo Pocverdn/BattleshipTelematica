@@ -226,10 +226,20 @@ void* timed_in(void* att) {
 
 void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], int totalH,char* path) {
     attack att;
-    char buffer[32];
+    char buffer[2];
     int totalHits = 0;
     int totalHitsNeeded = totalH;
-
+    /*Banderas:
+    T = timeout.
+    t = turno.
+    S = surrender.
+    D = le diste.
+    d = te dieron.
+    G = ganaste.
+    P = perdiste.
+    H = hundiste.
+    A = agua.
+    */
     while (true) {
         memset(buffer, 0, sizeof(buffer));
         int received = recv(sock, buffer, sizeof(buffer), 0);
@@ -239,20 +249,22 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
         }
 
         string msg(buffer);
-        trim(msg);
+        //trim(msg);
         safe_log(msg.c_str(),path);
-        if (msg.rfind("Impacto", 0) == 0) {
-            int x, y;
-            sscanf(msg.c_str(), "Impacto %d %d", &x, &y);
-            board[x][y] = 'X';
+        //if (msg.rfind("d", 0) == 0) {
+        if (buffer[0] == 'd') {
+            //int x, y;
+            //sscanf(msg.c_str(), "Impacto %d %d", &x, &y);
+            attack atk = decodeAttack(buffer[1]);
+            board[atk.posX][atk.posY] = 'X';
             std::ostringstream oss;
-            oss << "¡Tu enemigo te ha dado en X: " << x << " Y: " << y;
+            oss << "¡Tu enemigo te ha dado en X: " << atk.posX << " Y: " << atk.posY;
             safe_log(oss.str().c_str(), path);
-            cout << "\n💥 ¡Tu enemigo te ha dado en X: " << x << " Y: " << y << "\n\n";
+            cout << "\n💥 ¡Tu enemigo te ha dado en X: " << atk.posX << " Y: " << atk.posY << "\n\n";
             showBoard(board, ships, enemyBoard);
             //msg = "turn";
         }
-        if (msg == "turn") {
+        else if (buffer[0] == 't') {
             cout << "\n>>> Es tu turno de atacar.\n";
 
             //short x, y;
@@ -311,34 +323,34 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             trim(msg = string(buffer));
             
-            if (msg == "timeout") {
+            if (buffer[0] == 'T') {
                 cout << "⏰ Te quedaste sin tiempo para atacar. Pierdes el turno.\n\n";
         
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
                 cin.clear();
         
-            } else if (msg == "Acierto") {
+            } else if (buffer[0] == 'D') {
                 enemyBoard[att.posX][att.posY] = 'X';
                 cout << "¡Acierto!\n\n";
                 totalHits++;
-            } else if (msg == "Hundir") {
+            } else if (buffer[0] == 'H') {
                 enemyBoard[att.posX][att.posY] = 'X';
                 cout << "\n💥 ¡Hundiste el barco! 💥\n\n";
                 totalHits++;
-            } else if (msg == "Agua") {
+            } else if (buffer[0] == 'A') {
                 enemyBoard[att.posX][att.posY] = 'O';
                 cout << "\n¡Agua!\n\n";
             }
 
             showBoard(board, ships, enemyBoard);
 
-        } else if(msg == "wait"){
+        } else if(buffer[0] == 'W'){
             cout << "\n Turno del enemigo \n";
 
-        }  else if (msg == "Ganaste") {
+        }  else if (buffer[0] == 'G') {
             cout << "\n🎉 ¡Has ganado la partida!\n\n";
             break;
-        } else if (msg == "Perdiste") {
+        } else if (buffer[0] == 'P') {
             cout << "\n😢 Has perdido la partida.\n\n";
             break;
         }
