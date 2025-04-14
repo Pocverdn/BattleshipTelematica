@@ -41,9 +41,10 @@ struct attack {
     unsigned char posY;
 };
 
-void encode(const ship arr[], unsigned char* encoded) {
+inline void encode(const ship arr[], unsigned char* encoded) {
     memset(encoded, 0, 14); // Limpia el buffer antes de usarlo
-    unsigned char bPos = 0;
+    unsigned char bPos = 0;  //Podemos añadir una variable "K" para que la cantidad de barcos sea dynamica.
+                                //Con variable dynamica el tama�o de este char seria (Roof)K*3/2. cada barco es de 12 bits, y lo que mandamos esta en bytes, lo mismo aplica para las otras funciones.
 
     for (char i = 0; i < 9; i++) {
         encoded[bPos / 8] |= (arr[i].posX << (bPos % 8));
@@ -57,7 +58,7 @@ void encode(const ship arr[], unsigned char* encoded) {
     }
 }
 
-void decode(const unsigned char* arr, ship* decoded) {
+inline void decode(const unsigned char* arr, ship* decoded) {
     memset(decoded, 0, sizeof(ship) * 9); // Limpia el buffer antes de usarlo
     unsigned char bPos = 0;
 
