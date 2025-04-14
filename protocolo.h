@@ -343,8 +343,8 @@ void receive_player_info(int socket, char* username, char* email, char* path) {
 }
 
 void send_turn_messages(int active_fd, int waiting_fd) {
-    send(active_fd, "turn", strlen("turn") + 1, 0);
-    send(waiting_fd, "wait", strlen("wait") + 1, 0);
+    send(active_fd, "t", 1, 0);
+    send(waiting_fd, "w", 1, 0);
 }
 
 extern inline int setup_server(Server* server, char* IP, char* port) {

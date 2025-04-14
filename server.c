@@ -161,6 +161,7 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     fd_set read_fds;
     struct timeval timeout;
     unsigned char at;
+    unsigned char response[2];
     
     FD_ZERO(&read_fds);
     FD_SET(attacker_fd, &read_fds);
@@ -170,12 +171,26 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
 
     int activity = select(attacker_fd + 1, &read_fds, NULL, NULL, &timeout);
 
+    /*Banderas:
+    T = timeout.
+    t = turno.
+    S = surrender.
+    D = le diste.
+    d = te dieron.
+    G = ganaste.
+    P = perdiste.
+    H = hundiste.
+    A = agua.
+    */
+
     if (activity == -1) {
         perror("Error en select");
         
     } else if (activity == 0) {
         // Tiempo agotado
-        send(attacker_fd, "timeout", strlen("timeout") + 1, 0);
+        response[0] = 'T';
+        response[1] = 'O';
+        send(attacker_fd, response, 2, 0);
         printf("Jugador %s perdió su turno.\n", username);
     } else {
         bool sunk = false;
@@ -183,7 +198,7 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
         if (bytes <= 0) {
             perror("Error recibiendo ataque");
         }
-
+        response[1] = at;
         attack att = decodeAttack(at);
         char log_msg[128];
         snprintf(log_msg, sizeof(log_msg), "Jugador %s ataca: x = %d, y = %d", username, att.posX, att.posY);
@@ -191,14 +206,15 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
         safe_log(log_msg,path);
 
         if (att.posX == 10 && att.posY == 10) {
+            
             char surrender_msg[64];
             snprintf(surrender_msg, sizeof(surrender_msg), "Jugador %s se ha rendido.", username);
             printf("%s\n", surrender_msg);
             safe_log(surrender_msg, path);
 
             *giveUp = true;
-        
-            send(defender_fd, "Ganaste", strlen("Ganaste") + 1, 0);
+            response[0] = 'G';
+            send(defender_fd, response, 2, 0);
         }
 
         if (shoot(attacker_fd, board, ships, &sunk, att.posX, att.posY)) {
@@ -206,61 +222,28 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
 
             if(sunk){
                 printf("Hundido \n");
-                send(attacker_fd, "Hundir", strlen("Hundir") + 1, 0);
+                response[0] = 'H';
+                send(attacker_fd, response, 2, 0);
                 char impact_msg[32];
+                response[0] = 'd';
                 snprintf(impact_msg, sizeof(impact_msg), "Impacto %d %d", att.posX, att.posY);
-                send(defender_fd, impact_msg, strlen(impact_msg) + 1, 0);
+                send(defender_fd, response, 2, 0);
             }else{
-                send(attacker_fd, "Acierto", strlen("Acierto") + 1, 0);
+                response[0] = 'D';
+                send(attacker_fd, response, 2, 0);
                 char impact_msg[32];
                 snprintf(impact_msg, sizeof(impact_msg), "Impacto %d %d", att.posX, att.posY);
-                send(defender_fd, impact_msg, strlen(impact_msg) + 1, 0);
+                response[0] = 'd';
+                send(defender_fd, response, 2, 0);
             }
             
         } else {
-            send(attacker_fd, "Agua", strlen("Agua") + 1, 0);
+            response[0] = "A";
+            send(attacker_fd, response, 2, 0);
         }
     }
 }
 
-/*
-
-void safe_log(const char* message, const char* path) {
-    int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
-    if (fd == -1) {
-        perror("open");
-        return;
-    }
-
-    if (flock(fd, LOCK_EX) == -1) {
-        perror("flock");
-        close(fd);
-        return;
-    }
-
-    FILE* log_file = fdopen(fd, "a");
-    if (!log_file) {
-        perror("fdopen");
-        close(fd);
-        return; 
-    }
-
-    time_t now = time(NULL);
-    struct tm* t = localtime(&now);
-    fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] %s\n",
-            t->tm_year + 1900,
-            t->tm_mon + 1,
-            t->tm_mday,
-            t->tm_hour,
-            t->tm_min,
-            t->tm_sec,
-            message);
-
-    fflush(log_file);  
-    flock(fd, LOCK_UN); 
-    fclose(log_file);  
-}
-*/
 
 
 
@@ -308,12 +291,12 @@ void play_game(GameSession *session, char *path) {
     }
 
     if (hits1 >= totalHits) {
-        send(session->player1_fd, "Ganaste", 9, 0);
-        send(session->player2_fd, "Perdiste", 8, 0);
+        send(session->player1_fd, "G", 1, 0);
+        send(session->player2_fd, "P", 1, 0);
         printf("🎉 %s ganó la partida contra %s\n", session->player1_name, session->player2_name);
     } else {
-        send(session->player2_fd, "Ganaste", 9, 0);
-        send(session->player1_fd, "Perdiste", 8, 0);
+        send(session->player2_fd, "G", 1, 0);
+        send(session->player1_fd, "P", 1, 0);
         printf("🎉 %s ganó la partida contra %s\n", session->player2_name, session->player1_name);
     }
 }
