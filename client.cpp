@@ -212,10 +212,6 @@ int countShips(ship ships[TOTAL_SHIPS]){
     return total;
 }
 
-
-
-
-
 void* timed_in(void* att) {
 
     //printf("Thread");
