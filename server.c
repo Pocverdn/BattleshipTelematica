@@ -241,7 +241,7 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
             }
             
         } else {
-            response[0] = "A";
+            response[0] = 'A';
             send(attacker_fd, response, 2, 0);
         }
     }
