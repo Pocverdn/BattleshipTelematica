@@ -355,6 +355,9 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             cout << "\n😢 Has perdido la partida.\n\n";
             break;
         }
+        else {
+        cout << "\n😢ERROR!!😢.\nEs culpa de Mazy\n\n";
+        }
 
     }
 
