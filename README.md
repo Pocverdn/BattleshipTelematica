@@ -189,3 +189,31 @@ En cuanto a las metas conseguidas según las rúbricas puestas en clases, hemos 
 ### Servidor:
     Todos los requisitos fueron cumplidos.
 
+# Conclusiones:
+
+Nuestro proyecto implementa un juego de batalla naval. Para esto utilizamos sockets para la comunicación entre cliente y servidor, teniendo un archivo .h en el cual se implementa la codificación y decodificación del protocolo con el objetivo de enviar los datos de manera eficiente.
+
+    Tanto el cliente como el servidor utilizan la API de Berkeley para la comunicación. Esto incluye funciones como socket(), bind(), listen(), accept(), connect(), send() y recv().
+    
+    La implementación está basada en TCP, ya que TCP garantiza la entrega confiable de datos.
+
+## Flujo:
+
+### Cliente:
+
+    El cliente se conecta al servidor, registra al usuario (nombre y correo electrónico) y envía la configuración inicial de los barcos.
+    
+    Durante el juego, el cliente envía ataques al servidor y recibe respuestas que indican si el ataque fue un acierto, un fallo, o si hundió un barco.
+
+    El cliente maneja eventos como rendición (Ctrl + C), tiempo agotado, y finalización del juego (ganar o perder).
+
+### Servidor:
+
+    El servidor maneja múltiples sesiones de juego utilizando hilos (pthread), lo que permite que varios jugadores jueguen simultáneamente.
+    
+    Valida los ataques recibidos del cliente y actualiza el estado del juego (tablero, barcos, etc.).
+    
+    Envía respuestas al cliente para informar sobre el resultado del ataque y el estado del juego.
+
+
+
