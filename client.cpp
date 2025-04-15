@@ -345,7 +345,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             showBoard(board, ships, enemyBoard);
 
-        } else if(buffer[0] == 'W'){
+        } else if(buffer[0] == 'w'){
             cout << "\n Turno del enemigo \n";
 
         }  else if (buffer[0] == 'G') {
