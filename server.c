@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-
+#include <netinet/in.h>
 //Librerias sockets para linux
 #include <arpa/inet.h>
 #include <unistd.h> 
@@ -144,8 +144,10 @@ int countShips(ship ships[TOTAL_SHIPS]) {
     return total;
 }
 
-void initialize_session(GameSession *session, int socket, const char *username, ship *ships) {
+void initialize_session(GameSession *session, int socket, const char *username, ship *ships, const char *ip) {
     session->player1_fd = socket;
+    strncpy(session->player1_ip, ip, sizeof(session->player1_ip));
+    session->player1_ip[sizeof(session->player1_ip) - 1] = '\0';
     strncpy(session->player1_name, username, sizeof(session->player1_name));
     memcpy(session->ships1, ships, sizeof(ship) * TOTAL_SHIPS);
 
@@ -156,7 +158,8 @@ void initialize_session(GameSession *session, int socket, const char *username, 
     }
 }
 
-void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int attacker_fd, int defender_fd, int *hits, char *username, bool *giveUp, char* path) {
+void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int attacker_fd, int defender_fd, int *hits, char *username, bool *giveUp, char* path, char* attacker_ip,char* defender_ip)
+ {
     
     fd_set read_fds;
     struct timeval timeout;
@@ -203,14 +206,14 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
         char log_msg[128];
         snprintf(log_msg, sizeof(log_msg), "Jugador %s ataca: x = %d, y = %d", username, att.posX, att.posY);
         printf("%s\n", log_msg);
-        safe_log(log_msg,path);
+        safe_log(log_msg, path, attacker_ip);
 
         if (att.posX == 10 && att.posY == 10) {
             
             char surrender_msg[64];
             snprintf(surrender_msg, sizeof(surrender_msg), "Jugador %s se ha rendido.", username);
             printf("%s\n", surrender_msg);
-            safe_log(surrender_msg, path);
+            safe_log(surrender_msg, path, defender_ip);
 
             *giveUp = true;
             response[0] = 'G';
@@ -272,7 +275,7 @@ void play_game(GameSession *session, char *path) {
 
         if (turn) {
             send_turn_messages(session->player1_fd, session->player2_fd);
-            handle_turn(session, board2, session->ships2, session->player1_fd, session->player2_fd, &hits1, session->player1_name, &giveUp1, path);
+            handle_turn(session, board2, session->ships2, session->player1_fd, session->player2_fd, &hits1, session->player1_name, &giveUp1, path,session->player1_ip,session->player2_ip);
 
             if (giveUp1) {
                 break;
@@ -280,7 +283,7 @@ void play_game(GameSession *session, char *path) {
 
         } else {
             send_turn_messages(session->player2_fd, session->player1_fd);
-            handle_turn(session, board1, session->ships1, session->player2_fd, session->player1_fd, &hits2, session->player2_name, &giveUp2, path);
+            handle_turn(session, board1, session->ships1, session->player2_fd, session->player1_fd, &hits2, session->player2_name, &giveUp2, path,session->player1_ip,session->player2_ip);
 
             if (giveUp2) {
                 break;
@@ -306,11 +309,19 @@ void *handle_games(void *arg) {
     int new_socket = args->client_socket;
     char *path = args->path;
     ServerState *state = args->state;
+    struct sockaddr_in addr;
+    socklen_t len = sizeof(addr);
+    char client_ip[INET_ADDRSTRLEN];
+
+    if (getpeername(new_socket, (struct sockaddr*)&addr, &len) == 0) {
+        inet_ntop(AF_INET, &addr.sin_addr, client_ip, sizeof(client_ip));
+        printf("Client IP: %s\n", client_ip);
+    }
 
     ship player_ships[TOTAL_SHIPS];
     char username[50], email[50];
 
-    receive_player_info(new_socket, username, email, path);
+    receive_player_info(new_socket, username, email, path,client_ip);
 
     if (receive_encoded_ships(new_socket, player_ships) < 0) {
         close(new_socket);
@@ -327,6 +338,8 @@ void *handle_games(void *arg) {
         if (session->player1_fd != 0 && session->player2_fd == 0) {
             
             session->player2_fd = new_socket;
+            strncpy(session->player2_ip, client_ip, sizeof(session->player2_ip));
+            session->player2_ip[sizeof(session->player2_ip) - 1] = '\0';
             strncpy(session->player2_name, username, sizeof(session->player2_name));
             memcpy(session->ships2, player_ships, sizeof(ship) * TOTAL_SHIPS);
             paired = 1;
@@ -346,7 +359,7 @@ void *handle_games(void *arg) {
         GameSession *session = &state->sessions[state->current_session];
         memset(session, 0, sizeof(GameSession));
 
-        initialize_session(session, new_socket, username, player_ships);
+        initialize_session(session, new_socket, username, player_ships,client_ip);
         state->current_session++;
         printf("Jugador %s está esperando oponente...\n", username);
     } else {

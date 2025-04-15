@@ -190,6 +190,8 @@ typedef struct {
     int player2_fd;
     char player1_name[50];
     char player2_name[50];
+    char player1_ip[INET_ADDRSTRLEN];
+    char player2_ip[INET_ADDRSTRLEN];
     struct ship ships1[TOTAL_SHIPS];
     struct ship ships2[TOTAL_SHIPS];
 } GameSession;
@@ -285,7 +287,7 @@ unsigned char encodeAttack(attack A) {
 
 
 
-void safe_log(const char* message, const char* path) {
+void safe_log(const char* message, const char* path, const char* ip) {
     int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (fd == -1) {
         perror("open");
@@ -307,14 +309,15 @@ void safe_log(const char* message, const char* path) {
 
     time_t now = time(NULL);
     struct tm* t = localtime(&now);
-    fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] %s\n",
+    fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] %s (IP: %s)\n",
             t->tm_year + 1900,
             t->tm_mon + 1,
             t->tm_mday,
             t->tm_hour,
             t->tm_min,
             t->tm_sec,
-            message);
+            message,
+            ip);
 
     fflush(log_file);  
     flock(fd, LOCK_UN); 
@@ -322,7 +325,7 @@ void safe_log(const char* message, const char* path) {
 }
 
 
-void receive_player_info(int socket, char* username, char* email, char* path) {
+void receive_player_info(int socket, char* username, char* email, const char* path, const char* ip) {
     int bytes_username = recv(socket, username, 49, 0);
     int bytes_email = recv(socket, email, 49, 0);
 
@@ -339,7 +342,7 @@ void receive_player_info(int socket, char* username, char* email, char* path) {
 
     char log_msg[256];
     snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s | Email: %s", username, email);
-    safe_log(log_msg, path);
+    safe_log(log_msg, path, ip);
 }
 
 void send_turn_messages(int active_fd, int waiting_fd) {
