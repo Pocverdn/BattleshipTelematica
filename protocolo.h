@@ -3,7 +3,6 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h> 
-
 #define SIZE 10
 #define TOTAL_SHIPS 9
 #define BUFFER_SIZE 14
@@ -11,6 +10,7 @@
 #define BUFFER_SIZE_Confirm 1
 
 #ifdef __cplusplus
+#include <utility>
 #include <iostream>
 #include <sstream>
 #include <cstring>
@@ -124,13 +124,13 @@ void parse_config(const char* filename, char* server_ip, int* port) {
     file.close();
 }
 
-inline int connect_to_server(const Config& config) {
+inline std::pair<int, std::string> connect_to_server(const Config& config) {
     int client_fd;
     sockaddr_in serv_addr{};
 
     if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("Socket creation error");
-        return -1;
+        return {-1, ""};
     }
 
     serv_addr.sin_family = AF_INET;
@@ -138,15 +138,17 @@ inline int connect_to_server(const Config& config) {
 
     if (inet_pton(AF_INET, config.server_ip, &serv_addr.sin_addr) <= 0) {
         perror("Invalid address/ Address not supported");
-        return -1;
+        close(client_fd);
+        return {-1, ""};
     }
 
     if (connect(client_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
         perror("Connection Failed");
-        return -1;
+        close(client_fd);
+        return {-1, ""};
     }
 
-    return client_fd;
+    return {client_fd, config.server_ip};  
 }
 
 inline void registration( std::string &email, std::string &username, int client_fd) {
@@ -288,6 +290,27 @@ unsigned char encodeAttack(attack A) {
 
 
 void safe_log(const char* message, const char* path, const char* ip) {
+    char host_ip[INET_ADDRSTRLEN] = "unknown";
+
+    int temp_sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (temp_sock != -1) {
+        struct sockaddr_in remote_addr;
+        memset(&remote_addr, 0, sizeof(remote_addr));
+        remote_addr.sin_family = AF_INET;
+        remote_addr.sin_port = htons(80); 
+        inet_pton(AF_INET, "8.8.8.8", &remote_addr.sin_addr); 
+
+        connect(temp_sock, (struct sockaddr*)&remote_addr, sizeof(remote_addr));
+
+        struct sockaddr_in local_addr;
+        socklen_t addr_len = sizeof(local_addr);
+        if (getsockname(temp_sock, (struct sockaddr*)&local_addr, &addr_len) == 0) {
+            inet_ntop(AF_INET, &local_addr.sin_addr, host_ip, sizeof(host_ip));
+        }
+
+        close(temp_sock);
+    }
+
     int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (fd == -1) {
         perror("open");
@@ -309,15 +332,16 @@ void safe_log(const char* message, const char* path, const char* ip) {
 
     time_t now = time(NULL);
     struct tm* t = localtime(&now);
-    fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] %s (IP: %s)\n",
+    fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] Host IP: %s - %s (IP: %s)\n",
             t->tm_year + 1900,
             t->tm_mon + 1,
             t->tm_mday,
             t->tm_hour,
             t->tm_min,
             t->tm_sec,
+            ip,
             message,
-            ip);
+            host_ip); 
 
     fflush(log_file);  
     flock(fd, LOCK_UN); 

@@ -13,6 +13,7 @@
 #include <sys/file.h>  
 #include <fcntl.h>
 #include "protocolo.h"
+
 using namespace std;
 
 //#define BUFFER_SIZE 14
@@ -22,7 +23,28 @@ using namespace std;
 
 
 
-void safe_log(const char* message, const char* path) {
+void safe_log(const char* message, const char* path, const char* ip) {
+    char host_ip[INET_ADDRSTRLEN] = "unknown";
+
+    int temp_sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (temp_sock != -1) {
+        struct sockaddr_in remote_addr;
+        memset(&remote_addr, 0, sizeof(remote_addr));
+        remote_addr.sin_family = AF_INET;
+        remote_addr.sin_port = htons(80); 
+        inet_pton(AF_INET, "8.8.8.8", &remote_addr.sin_addr); 
+
+        connect(temp_sock, (struct sockaddr*)&remote_addr, sizeof(remote_addr));
+
+        struct sockaddr_in local_addr;
+        socklen_t addr_len = sizeof(local_addr);
+        if (getsockname(temp_sock, (struct sockaddr*)&local_addr, &addr_len) == 0) {
+            inet_ntop(AF_INET, &local_addr.sin_addr, host_ip, sizeof(host_ip));
+        }
+
+        close(temp_sock);
+    }
+
     int fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (fd == -1) {
         perror("open");
@@ -39,24 +61,27 @@ void safe_log(const char* message, const char* path) {
     if (!log_file) {
         perror("fdopen");
         close(fd);
-        return;
+        return; 
     }
 
     time_t now = time(NULL);
     struct tm* t = localtime(&now);
-    fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] %s\n",
+    fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] Host IP: %s - %s (IP: %s)\n",
             t->tm_year + 1900,
             t->tm_mon + 1,
             t->tm_mday,
             t->tm_hour,
             t->tm_min,
             t->tm_sec,
-            message);
+            host_ip,
+            message,
+            ip); 
 
     fflush(log_file);  
     flock(fd, LOCK_UN); 
     fclose(log_file);  
 }
+
 
 void initializeBoard(char board[SIZE][SIZE]){
     for(int i = 0; i < SIZE; i++){
@@ -224,7 +249,7 @@ void* timed_in(void* att) {
     return NULL;
 }
 
-void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], int totalH,char* path) {
+void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], int totalH,char* path,const char* server_ip) {
     attack att;
     char buffer[2];
     int totalHits = 0;
@@ -250,7 +275,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
         string msg(buffer);
         //trim(msg);
-        safe_log(msg.c_str(),path);
+        safe_log(msg.c_str(),path,server_ip);
         //if (msg.rfind("d", 0) == 0) {
         if (buffer[0] == 'd') {
             //int x, y;
@@ -259,7 +284,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             board[atk.posX][atk.posY] = 'X';
             std::ostringstream oss;
             oss << "¡Tu enemigo te ha dado en X: " << (short)atk.posX << " Y: " << (short)atk.posY;
-            safe_log(oss.str().c_str(), path);
+            safe_log(oss.str().c_str(), path,server_ip);
 
             cout << "\n💥 ¡Tu enemigo te ha dado en X: " << (short)atk.posX << " Y: " << (short)atk.posY << "\n\n";
             showBoard(board, ships, enemyBoard);
@@ -299,7 +324,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             att.posY = x[1];
             std::ostringstream oss;
             oss << "Input: X = " << x[0] << ", Y = " << x[1];
-            safe_log(oss.str().c_str(), path);
+            safe_log(oss.str().c_str(), path,server_ip);
             delete x;
             unsigned char serialized = encodeAttack(att);
 
@@ -363,7 +388,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
 }
 
-void chat_with_server(int client_fd,char* path) {
+void chat_with_server(int client_fd,char* path,const char* server_ip) {
     
     std::string username;
     std::string email;
@@ -382,7 +407,7 @@ void chat_with_server(int client_fd,char* path) {
     std::cout << "\n\nEsperando oponente\n\n";
     char log_msg[512];
     snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s, Email conectado: %s", username.c_str(), email.c_str());
-    safe_log(log_msg, path);
+    safe_log(log_msg, path,server_ip);
 
     int totalHitsNeeded = countShips(ships1);
 
@@ -390,7 +415,7 @@ void chat_with_server(int client_fd,char* path) {
     encode(ships1, serialized);
     send(client_fd, serialized, sizeof(serialized), 0);
 
-    game(client_fd, board1, ships1, board2, totalHitsNeeded,path);
+    game(client_fd, board1, ships1, board2, totalHitsNeeded,path,server_ip);
 
 }
 
@@ -413,11 +438,10 @@ int main(int argc, char* argv[]) {
 
 
     while(true){
-
-        int client_fd = connect_to_server(config);
+        auto [client_fd, server_ip] = connect_to_server(config);
         if (client_fd < 0) return -1;
 
-        chat_with_server(client_fd,argv[1]);
+        chat_with_server(client_fd,argv[1],server_ip.c_str());
 
         int playing;
         cout << "\n¿Quieres jugar otra partida? (1 = sí / 0 = no): ";
