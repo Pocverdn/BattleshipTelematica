@@ -280,32 +280,35 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             FD_ZERO(&readfds);
             FD_SET(STDIN_FILENO, &readfds);
 
-            cout << "Tienes 10 segundos para ingresar tus coordenadas (o se pasará el turno automáticamente).\n";
+            cout << "Tienes 10 segundos para ingresar tus coordenadas (Digite las coordenadas 10 10 para rendirse).\n Ingresa coordenadas Y X: ";
             int activity = select(STDIN_FILENO + 1, &readfds, NULL, NULL, &timeout);
             
             if (activity > 0 && FD_ISSET(STDIN_FILENO, &readfds)) {
                 cin >> x >> y;
                 inputReceived = true;
-            } else {
-                cout << "\n⏳ Tiempo agotado. Pasas tu turno automáticamente.\n";
             }
-
-            std::ostringstream oss;
-            oss << "Input: X = " << x << ", Y = " << y;
-            safe_log(oss.str().c_str(), path, server_ip);
-
-            if (x == 10 && y == 10) {
-                unsigned char serialized = encodeAttack(att);
-                send(sock, &serialized, sizeof(serialized), 0);
-                cout << "\n😢 Te has rendido.\n\n";
-                break;
-            }
-
-            system("clear");
 
             att.posX = x;
             att.posY = y;
+            std::ostringstream oss;
+            oss << "Input: X = " << x << ", Y = " << y;
+            safe_log(oss.str().c_str(), path, server_ip);
             unsigned char serialized = encodeAttack(att);
+
+            system("clear");
+
+            if (att.posX == 10 && att.posY == 10) {
+
+                send(sock, &serialized, sizeof(serialized), 0);
+                cout << "\n😢 Te has rendido.\n\n";
+                break;
+
+            }
+
+            if(inputReceived && !(att.posX == 10 && att.posY == 10)){
+                cout << "\n⏳ Tiempo agotado. Pasas tu turno automáticamente.\n";
+            }
+
             send(sock, &serialized, sizeof(serialized), 0);
 
             memset(buffer, 0, sizeof(buffer));
