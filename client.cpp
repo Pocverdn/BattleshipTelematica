@@ -237,23 +237,12 @@ int countShips(ship ships[TOTAL_SHIPS]){
     return total;
 }
 
-void* timed_in(void* att) {
-
-    //printf("Thread");
-    unsigned short* mgs = (unsigned short*)att;
-
-    //printf("%d", mgs[0]);
-    cin >> mgs[0] >> mgs[1];
-    //printf("owo");
-    //printf("%x", mgs[0]);
-    return NULL;
-}
-
-void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], int totalH,char* path,const char* server_ip) {
+void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], int totalH, char* path, const char* server_ip) {
     attack att;
     char buffer[2];
     int totalHits = 0;
     int totalHitsNeeded = totalH;
+
     /*Banderas:
     T = timeout.
     t = turno.
@@ -265,6 +254,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
     H = hundiste.
     A = agua.
     */
+
     while (true) {
         memset(buffer, 0, sizeof(buffer));
         int received = recv(sock, buffer, sizeof(buffer), 0);
@@ -274,70 +264,48 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
         }
 
         string msg(buffer);
-        //trim(msg);
-        safe_log(msg.c_str(),path,server_ip);
-        //if (msg.rfind("d", 0) == 0) {
-        if (buffer[0] == 'd') {
-            //int x, y;
-            //sscanf(msg.c_str(), "Impacto %d %d", &x, &y);
-            attack atk = decodeAttack(buffer[1]);
-            board[atk.posX][atk.posY] = 'X';
-            std::ostringstream oss;
-            oss << "¡Tu enemigo te ha dado en X: " << (short)atk.posX << " Y: " << (short)atk.posY;
-            safe_log(oss.str().c_str(), path,server_ip);
+        safe_log(msg.c_str(), path, server_ip);
 
-            cout << "\n💥 ¡Tu enemigo te ha dado en X: " << (short)atk.posX << " Y: " << (short)atk.posY << "\n\n";
-            showBoard(board, ships, enemyBoard);
-            //msg = "turn";
-        }
-        else if (buffer[0] == 't') {
+        if (buffer[0] == 't') {
             cout << "\n>>> Es tu turno de atacar.\n";
 
-            //short x, y;
-            unsigned short* x = new unsigned short[2]; //x[0] es x t x[1] Y
-            void* arg;
-            x[0] = 0;
-            x[1] = 247;
+            unsigned short x = 0, y = 0;
+            bool inputReceived = false;
 
-            arg = x;
-            do {
-                cin.clear();
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                pthread_t thread_id;
-                cout << "Digite las coordenadas 10 10 para rendirse\n";
-                cout << "Ingresa coordenadas Y X: ";
-                pthread_create(&thread_id, NULL, timed_in, arg);
-                time_t tiempo;
-                time_t current;
-                time(&tiempo);
-                tiempo = tiempo + 27;
-                do {
+            fd_set readfds;
+            struct timeval timeout;
+            timeout.tv_sec = 9; // Tiempo límite de 10 segundos
+            timeout.tv_usec = 500000;
 
-                    time(&current);
-                    //cout << (tiempo - current) << "\r";
-                } while ((current < tiempo) & (x[1]==247));
-            pthread_cancel(thread_id);
-            x[1] = (x[1] == 247 ? 0 : x[1]);
-            } while (x[0] > SIZE || x[1] > SIZE);//while (x[0] < 0 || x[0] > SIZE || x[1] < 0 || x[1] > SIZE);
+            FD_ZERO(&readfds);
+            FD_SET(STDIN_FILENO, &readfds);
 
-            att.posX = x[0];
-            att.posY = x[1];
+            cout << "Tienes 10 segundos para ingresar tus coordenadas (o se pasará el turno automáticamente).\n";
+            int activity = select(STDIN_FILENO + 1, &readfds, NULL, NULL, &timeout);
+            
+            if (activity > 0 && FD_ISSET(STDIN_FILENO, &readfds)) {
+                cin >> x >> y;
+                inputReceived = true;
+            } else {
+                cout << "\n⏳ Tiempo agotado. Pasas tu turno automáticamente.\n";
+            }
+
             std::ostringstream oss;
-            oss << "Input: X = " << x[0] << ", Y = " << x[1];
-            safe_log(oss.str().c_str(), path,server_ip);
-            delete x;
-            unsigned char serialized = encodeAttack(att);
+            oss << "Input: X = " << x << ", Y = " << y;
+            safe_log(oss.str().c_str(), path, server_ip);
 
-            system("clear");
-
-            if (att.posX == 10 && att.posY == 10) {
-
+            if (x == 10 && y == 10) {
+                unsigned char serialized = encodeAttack(att);
                 send(sock, &serialized, sizeof(serialized), 0);
                 cout << "\n😢 Te has rendido.\n\n";
                 break;
-
             }
 
+            system("clear");
+
+            att.posX = x;
+            att.posY = y;
+            unsigned char serialized = encodeAttack(att);
             send(sock, &serialized, sizeof(serialized), 0);
 
             memset(buffer, 0, sizeof(buffer));
@@ -348,14 +316,8 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             }
 
             trim(msg = string(buffer));
-            
-            if (buffer[0] == 'T') {
-                cout << "⏰ Te quedaste sin tiempo para atacar. Pierdes el turno.\n\n";
-        
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                cin.clear();
-        
-            } else if (buffer[0] == 'D') {
+
+            if (buffer[0] == 'D') {
                 enemyBoard[att.posX][att.posY] = 'X';
                 cout << "¡Acierto!\n\n";
                 totalHits++;
@@ -370,22 +332,29 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             showBoard(board, ships, enemyBoard);
 
-        } else if(buffer[0] == 'w'){
+        } else if (buffer[0] == 'd') {
+            attack atk = decodeAttack(buffer[1]);
+            board[atk.posX][atk.posY] = 'X';
+            std::ostringstream oss;
+            oss << "¡Tu enemigo te ha dado en X: " << (short)atk.posX << " Y: " << (short)atk.posY;
+            safe_log(oss.str().c_str(), path, server_ip);
+
+            cout << "\n💥 ¡Tu enemigo te ha dado en X: " << (short)atk.posX << " Y: " << (short)atk.posY << "\n\n";
+            showBoard(board, ships, enemyBoard);
+
+        } else if (buffer[0] == 'w') {
             cout << "\n Turno del enemigo \n";
 
-        }  else if (buffer[0] == 'G') {
+        } else if (buffer[0] == 'G') {
             cout << "\n🎉 ¡Has ganado la partida!\n\n";
             break;
+
         } else if (buffer[0] == 'P') {
             cout << "\n😢 Has perdido la partida.\n\n";
             break;
+            
         }
-        else {
-        cout << "\n😢ERROR!!😢.\nEs culpa de Mazy\n\n";
-        }
-
     }
-
 }
 
 void chat_with_server(int client_fd,char* path,const char* server_ip) {

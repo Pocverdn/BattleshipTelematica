@@ -11,20 +11,14 @@
 #include <unistd.h> 
 #include <pthread.h>
 #include <time.h>
+
+
+
 #include "protocolo.h"
-//14 bytes para envio de posiciones de barcos - 1 byte para comfirmación de disparo
-
-
-// Maximo de secciones
-
 
 // Logica del juego
 #define SIZE 10
 #define TOTAL_SHIPS 9
-
-// Sokets
-
-// Structs
 
 // Logica del juego
 
@@ -161,18 +155,38 @@ void initialize_session(GameSession *session, int socket, const char *username, 
 void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int attacker_fd, int defender_fd, int *hits, char *username, bool *giveUp, char* path, char* attacker_ip,char* defender_ip)
  {
     
-    fd_set read_fds;
-    struct timeval timeout;
     unsigned char at;
     unsigned char response[2];
-    
-    FD_ZERO(&read_fds);
-    FD_SET(attacker_fd, &read_fds);
+    bool sunk = false;
 
-    timeout.tv_sec = 30;
+    fd_set readfds;
+    struct timeval timeout;
+
+    timeout.tv_sec = 10;
     timeout.tv_usec = 0;
 
-    int activity = select(attacker_fd + 1, &read_fds, NULL, NULL, &timeout);
+    FD_ZERO(&readfds);
+    FD_SET(attacker_fd, &readfds);
+
+    int activity = select(attacker_fd + 1, &readfds, NULL, NULL, &timeout);
+
+
+    if (activity == 0) {
+        // Tiempo agotado
+        printf("El jugador %s no realizó su movimiento a tiempo. Turno perdido.\n", username);
+        response[0] = 'T'; // Notificar timeout
+        send(attacker_fd, response, 1, 0);
+        return;
+    } else if (activity < 0) {
+        perror("Error en select");
+        return;
+    }
+
+    int bytes = recv(attacker_fd, &at, 1, 0);
+    if (bytes <= 0) {
+        perror("Error recibiendo ataque");
+        return;
+    }
 
     /*Banderas:
     T = timeout.
@@ -186,66 +200,47 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     A = agua.
     */
 
-    if (activity == -1) {
-        perror("Error en select");
-        
-    } else if (activity == 0) {
-        // Tiempo agotado
-        response[0] = 'T';
-        response[1] = 'O';
-        send(attacker_fd, response, 2, 0);
-        printf("Jugador %s perdió su turno.\n", username);
-    } else {
-        bool sunk = false;
-        int bytes = recv(attacker_fd, &at, 1, 0);
-        if (bytes <= 0) {
-            perror("Error recibiendo ataque");
-        }
-        response[1] = at;
-        attack att = decodeAttack(at);
-        char log_msg[128];
-        snprintf(log_msg, sizeof(log_msg), "Jugador %s ataca: x = %d, y = %d", username, att.posX, att.posY);
-        printf("%s\n", log_msg);
-        safe_log(log_msg, path, attacker_ip);
+    
+    response[1] = at;
+    attack att = decodeAttack(at);
+    char log_msg[128];
+    snprintf(log_msg, sizeof(log_msg), "Jugador %s ataca: x = %d, y = %d", username, att.posX, att.posY);
+    printf("%s\n", log_msg);
+    safe_log(log_msg, path, attacker_ip);
 
-        if (att.posX == 10 && att.posY == 10) {
-            
-            char surrender_msg[64];
-            snprintf(surrender_msg, sizeof(surrender_msg), "Jugador %s se ha rendido.", username);
-            printf("%s\n", surrender_msg);
-            safe_log(surrender_msg, path, defender_ip);
+    if (att.posX == 10 && att.posY == 10) {
+        char surrender_msg[64];
+        snprintf(surrender_msg, sizeof(surrender_msg), "Jugador %s se ha rendido.", username);
+        printf("%s\n", surrender_msg);
+        safe_log(surrender_msg, path, defender_ip);
 
-            *giveUp = true;
-            response[0] = 'G';
+        *giveUp = true;
+        response[0] = 'G';
+        send(defender_fd, response, 2, 0);
+        return;
+    }
+
+    if (shoot(attacker_fd, board, ships, &sunk, att.posX, att.posY)) {
+        (*hits)++;
+
+        if (sunk) {
+            printf("Hundido\n");
+            response[0] = 'H';
+            send(attacker_fd, response, 2, 0);
+            response[0] = 'd';
+            send(defender_fd, response, 2, 0);
+        } else {
+            response[0] = 'D';
+            send(attacker_fd, response, 2, 0);
+            response[0] = 'd';
             send(defender_fd, response, 2, 0);
         }
-
-        if (shoot(attacker_fd, board, ships, &sunk, att.posX, att.posY)) {
-            (*hits)++;
-
-            if(sunk){
-                printf("Hundido \n");
-                response[0] = 'H';
-                send(attacker_fd, response, 2, 0);
-                char impact_msg[32];
-                response[0] = 'd';
-                snprintf(impact_msg, sizeof(impact_msg), "Impacto %d %d", att.posX, att.posY);
-                send(defender_fd, response, 2, 0);
-            }else{
-                response[0] = 'D';
-                send(attacker_fd, response, 2, 0);
-                char impact_msg[32];
-                snprintf(impact_msg, sizeof(impact_msg), "Impacto %d %d", att.posX, att.posY);
-                response[0] = 'd';
-                send(defender_fd, response, 2, 0);
-            }
-            
-        } else {
-            response[0] = 'A';
-            send(attacker_fd, response, 2, 0);
-        }
+    } else {
+        response[0] = 'A';
+        send(attacker_fd, response, 2, 0);
     }
 }
+
 
 
 
