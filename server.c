@@ -11,7 +11,7 @@
 #include <unistd.h> 
 #include <pthread.h>
 #include <time.h>
-
+#include <signal.h>
 
 
 #include "protocolo.h"
@@ -169,7 +169,7 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     FD_SET(attacker_fd, &readfds);
 
     int activity = select(attacker_fd + 1, &readfds, NULL, NULL, &timeout);
-
+    //printf("%x", activity);
 
     if (activity == 0) {
         // Tiempo agotado
@@ -412,6 +412,7 @@ extern inline void accept_clients(Server* server, char* path, ServerState* state
 
 
 int main(int argc, char* argv[]) {
+    signal(SIGPIPE, SIG_IGN);
     Server server;
     ServerState state;
     state.current_session = 0;
