@@ -270,24 +270,32 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
         if (buffer[0] == 't') {
             cout << "\n>>> Es tu turno de atacar.\n";
 
+            cout << "Tienes 30 segundos para ingresar tus coordenadas (Digite las coordenadas 10 10 para rendirse).\n";
+
             unsigned short x = 0, y = 0;
             bool inputReceived = false;
-
-            fd_set readfds;
-            struct timeval timeout;
-            timeout.tv_sec = 29; // Tiempo límite de 30 segundos
-            timeout.tv_usec = 500000;
-
-            FD_ZERO(&readfds);
-            FD_SET(STDIN_FILENO, &readfds);
-
-            cout << "Tienes 30 segundos para ingresar tus coordenadas (Digite las coordenadas 10 10 para rendirse).\n";
-            cout << "Ingresa las coordenadas Y X: " << std::flush;
-            int activity = select(STDIN_FILENO + 1, &readfds, NULL, NULL, &timeout);
+            int remainingTime = 30; // Tiempo restante en segundos
             
-            if (activity > 0 && FD_ISSET(STDIN_FILENO, &readfds)) {
-                cin >> x >> y;
-                inputReceived = true;
+            while (remainingTime > 0) {
+                fd_set readfds;
+                struct timeval timeout;
+                timeout.tv_sec = 1; // Verificar cada segundo
+                timeout.tv_usec = 0;
+            
+                FD_ZERO(&readfds);
+                FD_SET(STDIN_FILENO, &readfds);
+            
+                cout << "\rTiempo restante: " << remainingTime << " segundos. Ingresa las coordenadas Y X: " << std::flush;
+            
+                int activity = select(STDIN_FILENO + 1, &readfds, NULL, NULL, &timeout);
+            
+                if (activity > 0 && FD_ISSET(STDIN_FILENO, &readfds)) {
+                    cin >> x >> y;
+                    inputReceived = true;
+                    break;
+                }
+            
+                remainingTime--;
             }
 
             att.posX = x;
