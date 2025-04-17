@@ -216,4 +216,26 @@ Nuestro proyecto implementa un juego de batalla naval. Para esto utilizamos sock
     Envía respuestas al cliente para informar sobre el resultado del ataque y el estado del juego.
 
 
+# Referencias:
 
+Para la realización de este proyecto hemos empleado varios foros, paginas web, tutorias de internet y en menor medida Inteligencia artificial para correción de errores y validación de codigo, procedemos a compartir los respectivos links:
+
+    https://www.geeksforgeeks.org/socket-programming-cc/
+    
+    https://youtube.com/playlist?list=PLPyaR5G9aNDvs6TtdpLcVO43_jvxp4emI&si=71Qhxcd0CfV0Hozt
+    
+    https://stackoverflow.com/questions/2812029/send-socket-c-ctrlc-behavior
+    
+    https://www.ascii-code.com/
+    
+    https://legacy.cplusplus.com/
+
+    https://www.binarytides.com/winsock-socket-programming-tutorial/
+
+    https://www.geeksforgeeks.org/tcp-server-client-implementation-in-c/\
+
+    Modelo de IA: chatgpt 4.0
+
+    https://www.geeksforgeeks.org/http-headers-trailer/
+
+    https://www.geeksforgeeks.org/basics-file-handling-c/
