@@ -253,6 +253,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
     P = perdiste.
     H = hundiste.
     A = agua.
+    W = wait
     */
 
     while (true) {
