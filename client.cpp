@@ -237,11 +237,10 @@ int countShips(ship ships[TOTAL_SHIPS]){
     return total;
 }
 
-void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], int totalH, char* path, const char* server_ip) {
+void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], char* path, const char* server_ip) {
     attack att;
     char buffer[2];
     int totalHits = 0;
-    int totalHitsNeeded = totalH;
 
     /*Banderas:
     T = timeout.
@@ -378,13 +377,12 @@ void chat_with_server(int client_fd,char* path,const char* server_ip) {
     snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s, Email conectado: %s", username.c_str(), email.c_str());
     safe_log(log_msg, path,server_ip);
 
-    int totalHitsNeeded = countShips(ships1);
 
     unsigned char serialized[14];
     encode(ships1, serialized);
     send(client_fd, serialized, sizeof(serialized), 0);
 
-    game(client_fd, board1, ships1, board2, totalHitsNeeded,path,server_ip);
+    game(client_fd, board1, ships1, board2,path,server_ip);
 
 }
 
