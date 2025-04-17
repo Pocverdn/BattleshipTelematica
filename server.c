@@ -174,8 +174,6 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     if (activity == 0) {
         // Tiempo agotado
         printf("El jugador %s no realizó su movimiento a tiempo. Turno perdido.\n", username);
-        response[0] = 'T'; // Notificar timeout
-        send(attacker_fd, response, 1, 0);
         return;
     } else if (activity < 0) {
         perror("Error en select");
