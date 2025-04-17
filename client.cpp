@@ -237,10 +237,11 @@ int countShips(ship ships[TOTAL_SHIPS]){
     return total;
 }
 
-void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], char* path, const char* server_ip) {
+void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], int totalH, char* path, const char* server_ip) {
     attack att;
     char buffer[2];
     int totalHits = 0;
+    int totalHitsNeeded = totalH;
 
     /*Banderas:
     T = timeout.
@@ -273,13 +274,14 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             fd_set readfds;
             struct timeval timeout;
-            timeout.tv_sec = 9; // Tiempo límite de 10 segundos
+            timeout.tv_sec = 29; // Tiempo límite de 30 segundos
             timeout.tv_usec = 500000;
 
             FD_ZERO(&readfds);
             FD_SET(STDIN_FILENO, &readfds);
 
-            cout << "Tienes 10 segundos para ingresar tus coordenadas (Digite las coordenadas 10 10 para rendirse).\n Ingresa coordenadas Y X: ";
+            cout << "Tienes 30 segundos para ingresar tus coordenadas (Digite las coordenadas 10 10 para rendirse).\n";
+            cout << "Ingresa las coordenadas Y X: " << std::flush;
             int activity = select(STDIN_FILENO + 1, &readfds, NULL, NULL, &timeout);
             
             if (activity > 0 && FD_ISSET(STDIN_FILENO, &readfds)) {
@@ -296,7 +298,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             system("clear");
 
-            if (att.posX == 10 && att.posY == 10) {
+            if ((att.posX == 10 && att.posY == 10)) {
 
                 send(sock, &serialized, sizeof(serialized), 0);
                 cout << "\n😢 Te has rendido.\n\n";
@@ -304,7 +306,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             }
 
-            if(inputReceived && !(att.posX == 10 && att.posY == 10)){
+            if(!inputReceived && !(att.posX == 10 && att.posY == 10)){
                 cout << "\n⏳ Tiempo agotado. Pasas tu turno automáticamente.\n";
             }
 
@@ -380,12 +382,13 @@ void chat_with_server(int client_fd,char* path,const char* server_ip) {
     snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s, Email conectado: %s", username.c_str(), email.c_str());
     safe_log(log_msg, path,server_ip);
 
+    int totalHitsNeeded = countShips(ships1);
 
     unsigned char serialized[14];
     encode(ships1, serialized);
     send(client_fd, serialized, sizeof(serialized), 0);
 
-    game(client_fd, board1, ships1, board2,path,server_ip);
+    game(client_fd, board1, ships1, board2, totalHitsNeeded,path,server_ip);
 
 }
 

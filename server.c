@@ -162,7 +162,7 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     fd_set readfds;
     struct timeval timeout;
 
-    timeout.tv_sec = 10;
+    timeout.tv_sec = 30;
     timeout.tv_usec = 0;
 
     FD_ZERO(&readfds);
