@@ -366,7 +366,6 @@ void receive_player_info(int socket, char* username, char* email, const char* pa
 
     char log_msg[256];
     snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s | Email: %s", username, email);
-    safe_log(log_msg, path, ip);
 }
 
 void send_turn_messages(int active_fd, int waiting_fd) {
