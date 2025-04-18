@@ -236,6 +236,8 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
 
 
 void play_game(GameSession *session, char *path) {
+    // current_session = (current_session + 1) % MAX_SESSIONS;
+
     char board1[SIZE][SIZE], board2[SIZE][SIZE];
     initializeBoard(board1);
     initializeBoard(board2);
@@ -252,28 +254,23 @@ void play_game(GameSession *session, char *path) {
     bool giveUp1 = false, giveUp2 = false;
 
     printf("\n---- ¡Comienza el juego! ----\n");
-    safe_log("I | ¡Comienza el juego!", path, session->player1_ip);
-    safe_log("I | ¡Comienza el juego!", path, session->player2_ip);
 
     while (hits1 < totalHits && hits2 < totalHits) {
         printf("\nNuevo turno\n");
-        safe_log("t | Nuevo turno iniciado", path, session->player1_ip);
-        safe_log("t | Nuevo turno iniciado", path, session->player2_ip);
 
         if (turn) {
             send_turn_messages(session->player1_fd, session->player2_fd);
-            handle_turn(session, board2, session->ships2, session->player1_fd, session->player2_fd, &hits1, session->player1_name, &giveUp1, path, session->player1_ip, session->player2_ip);
+            handle_turn(session, board2, session->ships2, session->player1_fd, session->player2_fd, &hits1, session->player1_name, &giveUp1, path,session->player1_ip,session->player2_ip);
 
             if (giveUp1) {
-                safe_log("S | Jugador se ha rendido", path, session->player1_ip);
                 break;
             }
+
         } else {
             send_turn_messages(session->player2_fd, session->player1_fd);
-            handle_turn(session, board1, session->ships1, session->player2_fd, session->player1_fd, &hits2, session->player2_name, &giveUp2, path, session->player2_ip, session->player1_ip);
+            handle_turn(session, board1, session->ships1, session->player2_fd, session->player1_fd, &hits2, session->player2_name, &giveUp2, path,session->player1_ip,session->player2_ip);
 
             if (giveUp2) {
-                safe_log("S | Jugador se ha rendido", path, session->player2_ip);
                 break;
             }
         }
@@ -285,20 +282,12 @@ void play_game(GameSession *session, char *path) {
         send(session->player1_fd, "G", 1, 0);
         send(session->player2_fd, "P", 1, 0);
         printf("🎉 %s ganó la partida contra %s\n", session->player1_name, session->player2_name);
-
-        safe_log("G | Victoria del jugador", path, session->player1_ip);
-        safe_log("P | Derrota del jugador", path, session->player2_ip);
-
     } else {
         send(session->player2_fd, "G", 1, 0);
         send(session->player1_fd, "P", 1, 0);
         printf("🎉 %s ganó la partida contra %s\n", session->player2_name, session->player1_name);
-
-        safe_log("G | Victoria del jugador", path, session->player2_ip);
-        safe_log("P | Derrota del jugador", path, session->player1_ip);
     }
 }
-
 
 void *handle_games(void *arg) {
     ThreadArgs *args = (ThreadArgs *)arg;
