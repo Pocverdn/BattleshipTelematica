@@ -174,6 +174,9 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     if (activity == 0) {
         // Tiempo agotado
         printf("El jugador %s no realizó su movimiento a tiempo. Turno perdido.\n", username);
+        char timeout_msg[128];
+        snprintf(timeout_msg, sizeof(timeout_msg), "T | Tiempo agotado. El jugador %s no realizó su movimiento a tiempo.", username);
+        safe_log(timeout_msg, path, attacker_ip);
         return;
     } else if (activity < 0) {
         perror("Error en select");
@@ -200,17 +203,18 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     A = agua.
     */
 
-    
+
     response[1] = at;
     attack att = decodeAttack(at);
-    char log_msg[128];
-    snprintf(log_msg, sizeof(log_msg), "Jugador %s ataca: x = %d, y = %d", username, att.posX, att.posY);
-    printf("%s\n", log_msg);
-    safe_log(log_msg, path, attacker_ip);
+
+    char attack_msg[128];
+    snprintf(attack_msg, sizeof(attack_msg), "t | Jugador %s ataca: x = %d, y = %d", username, att.posX, att.posY);
+    printf("%s\n", attack_msg);
+    safe_log(attack_msg, path, attacker_ip);
 
     if (att.posX == 10 && att.posY == 10) {
-        char surrender_msg[64];
-        snprintf(surrender_msg, sizeof(surrender_msg), "Jugador %s se ha rendido.", username);
+        char surrender_msg[128];
+        snprintf(surrender_msg, sizeof(surrender_msg), "S | Jugador %s se ha rendido.", username);
         printf("%s\n", surrender_msg);
         safe_log(surrender_msg, path, defender_ip);
 
@@ -225,21 +229,25 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
 
         if (sunk) {
             printf("Hundido\n");
+            safe_log("H | Barco hundido", path, attacker_ip);
             response[0] = 'H';
             send(attacker_fd, response, 2, 0);
             response[0] = 'd';
             send(defender_fd, response, 2, 0);
         } else {
+            safe_log("D | Acierto", path, attacker_ip);
             response[0] = 'D';
             send(attacker_fd, response, 2, 0);
             response[0] = 'd';
             send(defender_fd, response, 2, 0);
         }
     } else {
+        safe_log("A | Agua", path, attacker_ip);
         response[0] = 'A';
         send(attacker_fd, response, 2, 0);
     }
 }
+
 
 
 void play_game(GameSession *session, char *path) {
@@ -288,12 +296,19 @@ void play_game(GameSession *session, char *path) {
     if (hits1 >= totalHits) {
         send(session->player1_fd, "G", 1, 0);
         send(session->player2_fd, "P", 1, 0);
+    
         printf("🎉 %s ganó la partida contra %s\n", session->player1_name, session->player2_name);
+        safe_log("G | Has ganado la partida", path, session->player1_ip);
+        safe_log("P | Has perdido la partida", path, session->player2_ip);
     } else {
         send(session->player2_fd, "G", 1, 0);
         send(session->player1_fd, "P", 1, 0);
+    
         printf("🎉 %s ganó la partida contra %s\n", session->player2_name, session->player1_name);
+        safe_log("G | Has ganado la partida", path, session->player2_ip);
+        safe_log("P | Has perdido la partida", path, session->player1_ip);
     }
+    
 }
 
 void *handle_games(void *arg) {
