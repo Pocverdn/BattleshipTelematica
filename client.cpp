@@ -1,4 +1,4 @@
-9#include <iostream>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cstring>
@@ -237,11 +237,10 @@ int countShips(ship ships[TOTAL_SHIPS]){
     return total;
 }
 
-void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], int totalH, char* path, const char* server_ip) {
+void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyBoard[SIZE][SIZE], char* path, const char* server_ip) {
     attack att;
     char buffer[2];
     int totalHits = 0;
-    int totalHitsNeeded = totalH;
 
     /*Banderas:
     T = timeout.
@@ -253,7 +252,6 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
     P = perdiste.
     H = hundiste.
     A = agua.
-    W = wait
     */
 
     while (true) {
@@ -270,32 +268,23 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
         if (buffer[0] == 't') {
             cout << "\n>>> Es tu turno de atacar.\n";
 
-            cout << "Tienes 30 segundos para ingresar tus coordenadas (Digite las coordenadas 10 10 para rendirse).\n";
-
             unsigned short x = 0, y = 0;
             bool inputReceived = false;
-            int remainingTime = 30; // Tiempo restante en segundos
+
+            fd_set readfds;
+            struct timeval timeout;
+            timeout.tv_sec = 9; // Tiempo límite de 10 segundos
+            timeout.tv_usec = 500000;
+
+            FD_ZERO(&readfds);
+            FD_SET(STDIN_FILENO, &readfds);
+
+            cout << "Tienes 10 segundos para ingresar tus coordenadas (Digite las coordenadas 10 10 para rendirse).\n Ingresa coordenadas Y X: ";
+            int activity = select(STDIN_FILENO + 1, &readfds, NULL, NULL, &timeout);
             
-            while (remainingTime > 0) {
-                fd_set readfds;
-                struct timeval timeout;
-                timeout.tv_sec = 6; // Verificar cada segundo
-                timeout.tv_usec = 0;
-            
-                FD_ZERO(&readfds);
-                FD_SET(STDIN_FILENO, &readfds);
-            
-                cout << "\rTiempo restante: " << remainingTime << " segundos. Ingresa las coordenadas Y X: " << std::flush;
-            
-                int activity = select(STDIN_FILENO + 1, &readfds, NULL, NULL, &timeout);
-            
-                if (activity > 0 && FD_ISSET(STDIN_FILENO, &readfds)) {
-                    cin >> x >> y;
-                    inputReceived = true;
-                    break;
-                }
-            
-                remainingTime=remainingTime-6;
+            if (activity > 0 && FD_ISSET(STDIN_FILENO, &readfds)) {
+                cin >> x >> y;
+                inputReceived = true;
             }
 
             att.posX = x;
@@ -307,7 +296,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             system("clear");
 
-            if ((att.posX == 10 && att.posY == 10)) {
+            if (att.posX == 10 && att.posY == 10) {
 
                 send(sock, &serialized, sizeof(serialized), 0);
                 cout << "\n😢 Te has rendido.\n\n";
@@ -315,7 +304,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             }
 
-            if(!inputReceived && !(att.posX == 10 && att.posY == 10)){
+            if(inputReceived && !(att.posX == 10 && att.posY == 10)){
                 cout << "\n⏳ Tiempo agotado. Pasas tu turno automáticamente.\n";
             }
 
@@ -391,22 +380,19 @@ void chat_with_server(int client_fd,char* path,const char* server_ip) {
     snprintf(log_msg, sizeof(log_msg), "Usuario conectado: %s, Email conectado: %s", username.c_str(), email.c_str());
     safe_log(log_msg, path,server_ip);
 
-    int totalHitsNeeded = countShips(ships1);
 
     unsigned char serialized[14];
     encode(ships1, serialized);
     send(client_fd, serialized, sizeof(serialized), 0);
 
-    game(client_fd, board1, ships1, board2, totalHitsNeeded,path,server_ip);
+    game(client_fd, board1, ships1, board2,path,server_ip);
 
 }
 
 inline void randSeed() {
     time_t tiempo;
     time(&tiempo);
-    //printf("%d", tiempo);
     srand(tiempo);
-    //printf("\n%d", rand());
 }
 
 int main(int argc, char* argv[]) {
