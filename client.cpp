@@ -419,7 +419,7 @@ inline void randSeed() {
     //printf("\n%d", rand());
 }
 
-inline void start() {
+inline void start(char* log) {
     Config config;
     parse_config("address.config", config.server_ip, &config.PORTLINUX);
 
@@ -428,7 +428,7 @@ inline void start() {
         auto [client_fd, server_ip] = connect_to_server(config);
         if (client_fd < 0) return -1;
 
-        chat_with_server(client_fd, argv[1], server_ip.c_str());
+        chat_with_server(client_fd, log, server_ip.c_str());
 
         int playing;
         cout << "\n¿Quieres jugar otra partida? (1 = sí / 0 = no): ";
@@ -449,7 +449,7 @@ int main(int argc, char* argv[]) {
 
     // Conexiones de cliente a socket
     randSeed();
-    start();
+    start(argv[1]);
 
     return 0;
 }
