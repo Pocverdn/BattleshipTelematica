@@ -11,7 +11,7 @@
 #include <unistd.h> 
 #include <pthread.h>
 #include <time.h>
-
+#include <signal.h>
 
 
 #include "protocolo.h"
@@ -187,6 +187,18 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
         return;
     }
 
+    /*Banderas:
+    T = timeout.
+    t = turno.
+    S = surrender.
+    D = le diste.
+    d = te dieron.
+    G = ganaste.
+    P = perdiste.
+    H = hundiste.
+    A = agua.
+    */
+
     
     response[1] = at;
     attack att = decodeAttack(at);
@@ -227,9 +239,6 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
         send(attacker_fd, response, 2, 0);
     }
 }
-
-
-
 
 
 void play_game(GameSession *session, char *path) {
@@ -401,6 +410,7 @@ extern inline void accept_clients(Server* server, char* path, ServerState* state
 
 
 int main(int argc, char* argv[]) {
+    signal(SIGPIPE, SIG_IGN);
     Server server;
     ServerState state;
     state.current_session = 0;

@@ -96,7 +96,7 @@ bool placeShipSize(char board[SIZE][SIZE], ship s) {
         int x = s.posX + (s.dir ? i : 0);
         int y = s.posY + (s.dir ? 0 : i);
 
-        if (x >= SIZE || y >= SIZE || board[x][y] != '~') {
+        if (x > SIZE || y > SIZE || board[x][y] != '~') {
             return false; // fuera del tablero o espacio ocupado
         }
     }
@@ -124,6 +124,10 @@ void setShips(char board[10][10],struct ship ships[9], string username) {
 			if (randp) {
 				cout << "Barco #" << i + 1 << " de tamaño " << (int)sizes[i] <<" - Ingresa X Y Direccion(H=0/V=1): ";
 				cin >> x >> y >> dir;
+                if(dir != 0 && dir != 1){
+                    cout << "Dirección inválida. Debe ser 0 (horizontal) o 1 (vertical).\n";
+                    continue;
+                }
 			}
 			else {
 				x = rand() % 10;
@@ -266,7 +270,6 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
         string msg(buffer);
         safe_log(msg.c_str(), path, server_ip);
-        safe_log(msg.c_str(), path, server_ip);
 
         if (buffer[0] == 't') {
             cout << "\n>>> Es tu turno de atacar.\n";
@@ -310,9 +313,6 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             std::ostringstream oss;
             oss << "Input: X = " << x << ", Y = " << y;
             safe_log(oss.str().c_str(), path, server_ip);
-            std::ostringstream oss;
-            oss << "Input: X = " << x << ", Y = " << y;
-            safe_log(oss.str().c_str(), path, server_ip);
             unsigned char serialized = encodeAttack(att);
 
             system("clear");
@@ -322,7 +322,6 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
                 send(sock, &serialized, sizeof(serialized), 0);
                 cout << "\n😢 Te has rendido.\n\n";
                 break;
-
 
             }
 
@@ -339,7 +338,6 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
                 break;
             }
 
-            trim(msg = string(buffer));
             trim(msg = string(buffer));
 
             if (buffer[0] == 'D') {
@@ -363,9 +361,6 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             std::ostringstream oss;
             oss << "¡Tu enemigo te ha dado en X: " << (short)atk.posX << " Y: " << (short)atk.posY;
             safe_log(oss.str().c_str(), path, server_ip);
-            std::ostringstream oss;
-            oss << "¡Tu enemigo te ha dado en X: " << (short)atk.posX << " Y: " << (short)atk.posY;
-            safe_log(oss.str().c_str(), path, server_ip);
 
             cout << "\n💥 ¡Tu enemigo te ha dado en X: " << (short)atk.posX << " Y: " << (short)atk.posY << "\n\n";
             showBoard(board, ships, enemyBoard);
@@ -380,7 +375,6 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
         } else if (buffer[0] == 'P') {
             cout << "\n😢 Has perdido la partida.\n\n";
             break;
-            
             
         }
     }
@@ -427,7 +421,7 @@ inline void randSeed() {
 
 int main(int argc, char* argv[]) {
 
-    // Conexiones de cliente a soket
+    // Conexiones de cliente a socket
     randSeed();
     Config config;
     parse_config("address.config", config.server_ip, &config.PORTLINUX);
