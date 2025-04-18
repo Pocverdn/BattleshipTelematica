@@ -9,7 +9,7 @@
 #define MAX_SESSIONS 10
 #define BUFFER_SIZE_Confirm 1
 
-#ifdef __cplusplus
+#ifdef __cplusplus //Protocolo del cliente.
 #include <utility>
 #include <iostream>
 #include <sstream>
@@ -40,7 +40,7 @@ struct attack {
     unsigned char posX;
     unsigned char posY;
 };
-
+//Revisar el github para la explicación de la codificación.
 inline void encode(const ship arr[], unsigned char* encoded) {
     memset(encoded, 0, 14); // Limpia el buffer antes de usarlo
     unsigned char bPos = 0;  //Podemos añadir una variable "K" para que la cantidad de barcos sea dynamica.
@@ -95,7 +95,7 @@ struct attack decodeAttack(unsigned char A) {
 	return decoded;
 }
 
-void parse_config(const char* filename, char* server_ip, int* port) {
+void parse_config(const char* filename, char* server_ip, int* port) { //Obtiene la IP y puerto de address.config
     std::ifstream file(filename);
     if (!file.is_open()) {
         perror("Error opening config file");
@@ -124,7 +124,7 @@ void parse_config(const char* filename, char* server_ip, int* port) {
     file.close();
 }
 
-inline std::pair<int, std::string> connect_to_server(const Config& config) {
+inline std::pair<int, std::string> connect_to_server(const Config& config) { //Empareja el servidor y el socket
     int client_fd;
     sockaddr_in serv_addr{};
 
@@ -151,7 +151,7 @@ inline std::pair<int, std::string> connect_to_server(const Config& config) {
     return {client_fd, config.server_ip};  
 }
 
-inline void registration( std::string &email, std::string &username, int client_fd) {
+inline void registration( std::string &email, std::string &username, int client_fd) { //Le pide al cliente el usuario y email para que se registre
     //char buffer[BUFFER_SIZE] = { 0 };
     std::cout << "Enter your username: ";
     std::getline(std::cin >> std::ws, username);
@@ -163,7 +163,7 @@ inline void registration( std::string &email, std::string &username, int client_
     return;
 }
 
-#else
+#else //Protocolo del servidor
 #include <stdbool.h>
 
 typedef struct sockaddr_in sockaddr_in;
@@ -210,6 +210,7 @@ typedef struct {
     ServerState* state;
 } ThreadArgs;
 
+//Revisar el github para la explicación de la codificación.
 void decode(const unsigned char* arr, ship* decoded) {
     memset(decoded, 0, sizeof(ship) * 9); // Limpia el buffer antes de usarlo
     unsigned char bPos = 0;
@@ -247,7 +248,7 @@ void encode(const ship arr[], unsigned char* encoded) {
     }
 }
 
-int receive_encoded_ships(int client_fd, ship ships[]) {
+int receive_encoded_ships(int client_fd, ship ships[]) {//Una funcion para manejar potenciales errores al revisar el mensaje codificado
     unsigned char buffer[BUFFER_SIZE];
     int bytes = read(client_fd, buffer, BUFFER_SIZE);
     //printf("bytes: %d\n", bytes);
@@ -289,7 +290,7 @@ unsigned char encodeAttack(attack A) {
 
 
 
-void safe_log(const char* message, const char* path, const char* ip) {
+void safe_log(const char* message, const char* path, const char* ip) { //Guarda el log del servidor
     char host_ip[INET_ADDRSTRLEN] = "unknown";
 
     int temp_sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -349,7 +350,7 @@ void safe_log(const char* message, const char* path, const char* ip) {
 }
 
 
-void receive_player_info(int socket, char* username, char* email, const char* path, const char* ip) {
+void receive_player_info(int socket, char* username, char* email, const char* path, const char* ip) { //Imprime y maneja errores cuando los usarios envian la información de registro
     int bytes_username = recv(socket, username, 49, 0);
     int bytes_email = recv(socket, email, 49, 0);
 
@@ -369,12 +370,12 @@ void receive_player_info(int socket, char* username, char* email, const char* pa
     safe_log(log_msg, path, ip);
 }
 
-void send_turn_messages(int active_fd, int waiting_fd) {
-    send(active_fd, "t", 1, 0);
-    send(waiting_fd, "w", 1, 0);
+void send_turn_messages(int active_fd, int waiting_fd) { 
+    send(active_fd, "t", 1, 0); //A quien le toca atacar
+    send(waiting_fd, "w", 1, 0); //A quien le toca esperar
 }
 
-extern inline int setup_server(Server* server, char* IP, char* port) {
+extern inline int setup_server(Server* server, char* IP, char* port) { //Maneja que puerto y IP usa el servidor.
     server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server->server_fd == -1) {
         perror("Socket creation failed");
