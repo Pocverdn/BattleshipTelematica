@@ -11,7 +11,7 @@
 #include <unistd.h> 
 #include <pthread.h>
 #include <time.h>
-#include <signal.h>
+
 
 
 #include "protocolo.h"
@@ -153,8 +153,7 @@ void initialize_session(GameSession *session, int socket, const char *username, 
 }
 
 void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int attacker_fd, int defender_fd, int *hits, char *username, bool *giveUp, char* path, char* attacker_ip,char* defender_ip)
- {
-    
+{
     unsigned char at;
     unsigned char response[2];
     bool sunk = false;
@@ -169,11 +168,11 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     FD_SET(attacker_fd, &readfds);
 
     int activity = select(attacker_fd + 1, &readfds, NULL, NULL, &timeout);
-    //printf("%x", activity);
 
     if (activity == 0) {
         // Tiempo agotado
-        printf("El jugador %s no realizó su movimiento a tiempo. Turno perdido.\n", username);
+        printf("T | El jugador %s no realizó su movimiento a tiempo. Turno perdido.\n", username);
+        safe_log("T | Turno perdido por timeout.", path, attacker_ip); 
         return;
     } else if (activity < 0) {
         perror("Error en select");
@@ -183,33 +182,20 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     int bytes = recv(attacker_fd, &at, 1, 0);
     if (bytes <= 0) {
         perror("Error recibiendo ataque");
-        send(defender_fd, "G", 1, 0);
         return;
     }
 
-    /*Banderas:
-    T = timeout.
-    t = turno.
-    S = surrender.
-    D = le diste.
-    d = te dieron.
-    G = ganaste.
-    P = perdiste.
-    H = hundiste.
-    A = agua.
-    */
-
-    
-    response[1] = at;
     attack att = decodeAttack(at);
     char log_msg[128];
-    snprintf(log_msg, sizeof(log_msg), "Jugador %s ataca: x = %d, y = %d", username, att.posX, att.posY);
+    snprintf(log_msg, sizeof(log_msg), "t | Jugador %s ataca: x = %d, y = %d", username, att.posX, att.posY);
     printf("%s\n", log_msg);
     safe_log(log_msg, path, attacker_ip);
 
+    response[1] = at;
+
     if (att.posX == 10 && att.posY == 10) {
         char surrender_msg[64];
-        snprintf(surrender_msg, sizeof(surrender_msg), "Jugador %s se ha rendido.", username);
+        snprintf(surrender_msg, sizeof(surrender_msg), "S | Jugador %s se ha rendido.", username); 
         printf("%s\n", surrender_msg);
         safe_log(surrender_msg, path, defender_ip);
 
@@ -223,18 +209,23 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
         (*hits)++;
 
         if (sunk) {
-            printf("Hundido\n");
+            printf("H | Hundido\n"); 
+            safe_log("H | Ataque resultó en hundimiento.", path, attacker_ip);
             response[0] = 'H';
             send(attacker_fd, response, 2, 0);
             response[0] = 'd';
             send(defender_fd, response, 2, 0);
         } else {
+            printf("D | Disparo acertado\n");
+            safe_log("D | Ataque acertado sin hundimiento.", path, attacker_ip);
             response[0] = 'D';
             send(attacker_fd, response, 2, 0);
             response[0] = 'd';
             send(defender_fd, response, 2, 0);
         }
     } else {
+        printf("A | Agua\n");
+        safe_log("A | Ataque fallido. Agua.", path, attacker_ip); 
         response[0] = 'A';
         send(attacker_fd, response, 2, 0);
     }
@@ -410,15 +401,14 @@ extern inline void accept_clients(Server* server, char* path, ServerState* state
 
 
 int main(int argc, char* argv[]) {
-    signal(SIGPIPE, SIG_IGN);
     Server server;
     ServerState state;
     state.current_session = 0;
     pthread_mutex_init(&state.session_mutex, NULL);
+
     setup_server(&server, argv[1], argv[2]);
     
     accept_clients(&server, argv[3], &state);
-
 
     close(server.server_fd);
 
