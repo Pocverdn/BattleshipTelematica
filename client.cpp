@@ -1,4 +1,4 @@
-#include <iostream>
+9#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cstring>
@@ -295,7 +295,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
                     break;
                 }
             
-                remainingTime--;
+                remainingTime=remainingTime-6;
             }
 
             att.posX = x;
