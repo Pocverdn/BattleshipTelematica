@@ -241,9 +241,6 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
 }
 
 
-
-
-
 void play_game(GameSession *session, char *path) {
     // current_session = (current_session + 1) % MAX_SESSIONS;
 
@@ -420,9 +417,8 @@ int main(int argc, char* argv[]) {
     pthread_mutex_init(&state.session_mutex, NULL);
     setup_server(&server, argv[1], argv[2]);
     
-    while (true) {
-        accept_clients(&server, argv[3], &state);
-    }
+    accept_clients(&server, argv[3], &state);
+
 
     close(server.server_fd);
 
