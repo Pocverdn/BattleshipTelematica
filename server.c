@@ -184,6 +184,7 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     if (bytes <= 0) {
         perror("Error recibiendo ataque");
         send(defender_fd, "G", 1, 0);
+        *giveUp = true;
         return;
     }
 
