@@ -232,6 +232,9 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
 }
 
 
+
+
+
 void play_game(GameSession *session, char *path) {
     char board1[SIZE][SIZE], board2[SIZE][SIZE];
     initializeBoard(board1);
