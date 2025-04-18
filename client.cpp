@@ -96,7 +96,7 @@ bool placeShipSize(char board[SIZE][SIZE], ship s) {
         int x = s.posX + (s.dir ? i : 0);
         int y = s.posY + (s.dir ? 0 : i);
 
-        if (x >= SIZE || y >= SIZE || board[x][y] != '~') {
+        if (x > SIZE || y > SIZE || board[x][y] != '~') {
             return false; // fuera del tablero o espacio ocupado
         }
     }
@@ -124,6 +124,10 @@ void setShips(char board[10][10],struct ship ships[9], string username) {
 			if (randp) {
 				cout << "Barco #" << i + 1 << " de tamaño " << (int)sizes[i] <<" - Ingresa X Y Direccion(H=0/V=1): ";
 				cin >> x >> y >> dir;
+                if(dir != 0 && dir != 1){
+                    cout << "Dirección inválida. Debe ser 0 (horizontal) o 1 (vertical).\n";
+                    continue;
+                }
 			}
 			else {
 				x = rand() % 10;
@@ -268,23 +272,38 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
         if (buffer[0] == 't') {
             cout << "\n>>> Es tu turno de atacar.\n";
 
+            cout << "Tienes 30 segundos para ingresar tus coordenadas (Digite las coordenadas 10 10 para rendirse).\n";
+
             unsigned short x = 0, y = 0;
             bool inputReceived = false;
-
-            fd_set readfds;
-            struct timeval timeout;
-            timeout.tv_sec = 9; // Tiempo límite de 10 segundos
-            timeout.tv_usec = 500000;
-
-            FD_ZERO(&readfds);
-            FD_SET(STDIN_FILENO, &readfds);
-
-            cout << "Tienes 10 segundos para ingresar tus coordenadas (Digite las coordenadas 10 10 para rendirse).\n Ingresa coordenadas Y X: ";
-            int activity = select(STDIN_FILENO + 1, &readfds, NULL, NULL, &timeout);
+            int remainingTime = 30; // Tiempo restante en segundos
             
-            if (activity > 0 && FD_ISSET(STDIN_FILENO, &readfds)) {
-                cin >> x >> y;
-                inputReceived = true;
+            while (remainingTime > 0) {
+                fd_set readfds;
+                struct timeval timeout;
+                timeout.tv_sec = 6; // Verificar cada segundo
+                timeout.tv_usec = 0;
+            
+                FD_ZERO(&readfds);
+                FD_SET(STDIN_FILENO, &readfds);
+            
+                cout << "\rTiempo restante: " << remainingTime << " segundos. Ingresa las coordenadas Y X: " << std::flush;
+            
+                int activity = select(STDIN_FILENO + 1, &readfds, NULL, NULL, &timeout);
+            
+                if (activity > 0 && FD_ISSET(STDIN_FILENO, &readfds)) {
+                    cin >> x >> y;
+
+                    if ((x < 0 || x >= SIZE || y < 0 || y >= SIZE) && !(x == 10 && y == 10)) {
+                        cout << "\nCoordenadas fuera del rango permitido (0-9). Intenta de nuevo.\n";
+                        continue; // Volver a solicitar las coordenadas
+                    }
+
+                    inputReceived = true;
+                    break;
+                }
+            
+                remainingTime=remainingTime-6;
             }
 
             att.posX = x;
@@ -296,7 +315,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             system("clear");
 
-            if (att.posX == 10 && att.posY == 10) {
+            if ((att.posX == 10 && att.posY == 10)) {
 
                 send(sock, &serialized, sizeof(serialized), 0);
                 cout << "\n😢 Te has rendido.\n\n";
@@ -304,7 +323,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             }
 
-            if(inputReceived && !(att.posX == 10 && att.posY == 10)){
+            if(!inputReceived && !(att.posX == 10 && att.posY == 10)){
                 cout << "\n⏳ Tiempo agotado. Pasas tu turno automáticamente.\n";
             }
 
@@ -334,7 +353,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
             showBoard(board, ships, enemyBoard);
 
-        } else if (buffer[0] == 'd') {
+        }else if (buffer[0] == 'd') {
             attack atk = decodeAttack(buffer[1]);
             board[atk.posX][atk.posY] = 'X';
             std::ostringstream oss;
@@ -397,7 +416,7 @@ inline void randSeed() {
 
 int main(int argc, char* argv[]) {
 
-    // Conexiones de cliente a soket
+    // Conexiones de cliente a socket
     randSeed();
     Config config;
     parse_config("address.config", config.server_ip, &config.PORTLINUX);
