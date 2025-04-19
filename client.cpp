@@ -183,7 +183,7 @@ void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char secondBoard
             }
 
             if (isShip) {
-                cout << "B ";
+                cout << "🚢 ";
             } else if (board[i][j] == 'X' || board[i][j] == 'O') {
                 cout << board[i][j] << " ";
             } else {

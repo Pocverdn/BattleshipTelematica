@@ -72,7 +72,7 @@ void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS]) { //Impreme el t
             }
 
             if (isShip) {
-                printf("B ");
+                printf("🚢 ");
             } else if (board[i][j] == 'X' || board[i][j] == 'O') {
                 printf("%c ", board[i][j]);
             } else {
