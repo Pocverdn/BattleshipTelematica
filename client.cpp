@@ -268,12 +268,12 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             break;
         }
 
-        string msg(buffer);
-        std::ostringstream log_msg;
-        log_msg << "FLAG: " << buffer[0] << " | MENSAJE: " << msg;
-        safe_log(log_msg.str().c_str(), path, server_ip);
-
         if (buffer[0] == 't') {  //Cada if es un caso diferente de lo que pasa cada turno.
+            string msg(buffer);
+            std::ostringstream log_msg;
+            log_msg << buffer[0] << " | MENSAJE: Tu turno " << msg;
+            safe_log(log_msg.str().c_str(), path, server_ip);
+            
             cout << "\n>>> Es tu turno de atacar.\n";
 
             cout << "Tienes 30 segundos para ingresar tus coordenadas (Digite las coordenadas 10 10 para rendirse).\n";
