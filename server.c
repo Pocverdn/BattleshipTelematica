@@ -22,7 +22,7 @@
 
 // Logica del juego
 
-void initializeBoard(char board[SIZE][SIZE]) { //Llena el table con agua.
+void initializeBoard(char board[SIZE][SIZE]) { //Llena el tablero con agua.
     for(int i = 0; i < SIZE; i++){
         for(int j = 0; j < SIZE; j++){
             board[i][j] = '~'; // Agua no revelada
@@ -47,7 +47,7 @@ void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char* username) {
     }
 }
 
-void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS]) { //Impreme el tablaro basado en la información de los barcos.
+void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS]) { //Impreme el tablero basado en la información de los barcos.
     printf("  ");
     for (int j = 0; j < SIZE; ++j) printf("%d ", j);
     printf("\n");
@@ -123,14 +123,6 @@ bool shoot(int socket, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], b
     return false;
 }
 
-int countShoot(char board[SIZE][SIZE]) { //La cantidad de veces que le an pegado a los barcos, se usa para saber quien gano.
-    int count = 0;
-    for (int i = 0; i < SIZE; ++i)
-        for (int j = 0; j < SIZE; ++j)
-            if (board[i][j] == 'X') count++;
-    return count;
-}
-
 int countShips(ship ships[TOTAL_SHIPS]) { //Cuanta la cantidad total de partes de barcos
     int total = 0;
     for (int i = 0; i < TOTAL_SHIPS; ++i)
@@ -138,7 +130,7 @@ int countShips(ship ships[TOTAL_SHIPS]) { //Cuanta la cantidad total de partes d
     return total;
 }
 
-void initialize_session(GameSession *session, int socket, const char *username, ship *ships, const char *ip) { //Recive la información de los barcos de cada jugador
+void initialize_session(GameSession *session, int socket, const char *username, ship *ships, const char *ip) { //Recibe la información de los barcos de cada jugador
     session->player1_fd = socket; 
     strncpy(session->player1_ip, ip, sizeof(session->player1_ip));
     session->player1_ip[sizeof(session->player1_ip) - 1] = '\0';
@@ -155,14 +147,14 @@ void initialize_session(GameSession *session, int socket, const char *username, 
 void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int attacker_fd, int defender_fd, int *hits, char *username, bool *giveUp, char* path, char* attacker_ip,char* defender_ip)
  {
     
-    unsigned char at; //Maneja la logica de juego, que pasa despues de los ataques, mandar el timeout, etc.
+    unsigned char at; //Maneja la lógica de juego, que pasa despues de los ataques, mandar el timeout, etc.
     unsigned char response[2];
     bool sunk = false;
 
     fd_set readfds;
     struct timeval timeout;
 
-    timeout.tv_sec = 30;
+    timeout.tv_sec = 31;
     timeout.tv_usec = 0;
 
     FD_ZERO(&readfds);
@@ -248,8 +240,6 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     }
 }
 
-
-
 void play_game(GameSession *session, char *path) {
     // current_session = (current_session + 1) % MAX_SESSIONS;
 
@@ -311,7 +301,7 @@ void play_game(GameSession *session, char *path) {
     
 }
 
-void *handle_games(void *arg) { //Empieza el juego y manaja quien empieza
+void *handle_games(void *arg) { //Empieza el juego y maneja las seciones
     ThreadArgs *args = (ThreadArgs *)arg;
     int new_socket = args->client_socket;
     char *path = args->path;
@@ -379,8 +369,7 @@ void *handle_games(void *arg) { //Empieza el juego y manaja quien empieza
     return NULL;
 }
 
-
-extern inline void accept_clients(Server* server, char* path, ServerState* state) { //manaja que se conecte el cliente. Antes estaba en protocolo.h
+extern inline void accept_clients(Server* server, char* path, ServerState* state) { //maneja que se conecte el cliente. Antes estaba en protocolo.h
     int addrlen = sizeof(server->address);
     pthread_t thread_id;
 
@@ -423,7 +412,6 @@ extern inline void accept_clients(Server* server, char* path, ServerState* state
         free(new_socket);
     }
 }
-
 
 void stablish_connection(char* argv[]) {
     Server server;  //Creamos las structuras para manejar las conecxiones
