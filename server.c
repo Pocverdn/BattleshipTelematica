@@ -22,7 +22,7 @@
 
 // Logica del juego
 
-void initializeBoard(char board[SIZE][SIZE]) {
+void initializeBoard(char board[SIZE][SIZE]) { //Llena el table con agua.
     for(int i = 0; i < SIZE; i++){
         for(int j = 0; j < SIZE; j++){
             board[i][j] = '~'; // Agua no revelada
@@ -30,7 +30,7 @@ void initializeBoard(char board[SIZE][SIZE]) {
     }
 }
 
-bool placeShipSize(char board[SIZE][SIZE], ship s) {
+bool placeShipSize(char board[SIZE][SIZE], ship s) { //Pone un barco
     for(int i = 0; i < s.size; ++i) {
         int x = s.posX + (s.dir ? i : 0);
         int y = s.posY + (s.dir ? 0 : i);
@@ -40,14 +40,14 @@ bool placeShipSize(char board[SIZE][SIZE], ship s) {
     return true;
 }
 
-void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char* username) {
+void setShips(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char* username) { //Manda a poner los barcos
     printf("\nJugador %s, coloca tus %d barcos.\n", username, TOTAL_SHIPS);
     for (int i = 0; i < TOTAL_SHIPS; ++i) {
         placeShipSize(board, ships[i]);
     }
 }
 
-void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS]) {
+void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS]) { //Impreme el tablaro basado en la información de los barcos.
     printf("  ");
     for (int j = 0; j < SIZE; ++j) printf("%d ", j);
     printf("\n");
@@ -123,7 +123,7 @@ bool shoot(int socket, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], b
     return false;
 }
 
-int countShoot(char board[SIZE][SIZE]) {
+int countShoot(char board[SIZE][SIZE]) { //La cantidad de veces que le an pegado a los barcos, se usa para saber quien gano.
     int count = 0;
     for (int i = 0; i < SIZE; ++i)
         for (int j = 0; j < SIZE; ++j)
@@ -131,15 +131,15 @@ int countShoot(char board[SIZE][SIZE]) {
     return count;
 }
 
-int countShips(ship ships[TOTAL_SHIPS]) {
+int countShips(ship ships[TOTAL_SHIPS]) { //Cuanta la cantidad total de partes de barcos
     int total = 0;
     for (int i = 0; i < TOTAL_SHIPS; ++i)
         total += ships[i].size;
     return total;
 }
 
-void initialize_session(GameSession *session, int socket, const char *username, ship *ships, const char *ip) {
-    session->player1_fd = socket;
+void initialize_session(GameSession *session, int socket, const char *username, ship *ships, const char *ip) { //Recive la información de los barcos de cada jugador
+    session->player1_fd = socket; 
     strncpy(session->player1_ip, ip, sizeof(session->player1_ip));
     session->player1_ip[sizeof(session->player1_ip) - 1] = '\0';
     strncpy(session->player1_name, username, sizeof(session->player1_name));
@@ -155,7 +155,7 @@ void initialize_session(GameSession *session, int socket, const char *username, 
 void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships[TOTAL_SHIPS], int attacker_fd, int defender_fd, int *hits, char *username, bool *giveUp, char* path, char* attacker_ip,char* defender_ip)
  {
     
-    unsigned char at;
+    unsigned char at; //Maneja la logica de juego, que pasa despues de los ataques, mandar el timeout, etc.
     unsigned char response[2];
     bool sunk = false;
 
@@ -253,7 +253,7 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
 void play_game(GameSession *session, char *path) {
     // current_session = (current_session + 1) % MAX_SESSIONS;
 
-    char board1[SIZE][SIZE], board2[SIZE][SIZE];
+    char board1[SIZE][SIZE], board2[SIZE][SIZE]; //Establece los tableros de cada jugador y pone sus barcos.
     initializeBoard(board1);
     initializeBoard(board2);
 
@@ -270,7 +270,7 @@ void play_game(GameSession *session, char *path) {
 
     printf("\n---- ¡Comienza el juego! ----\n");
 
-    while (hits1 < totalHits && hits2 < totalHits) {
+    while (hits1 < totalHits && hits2 < totalHits) { //Manaja a quien le toca atacar y manda los mensajes de los resultaods
         printf("\nNuevo turno\n");
 
         if (turn) {
@@ -286,14 +286,14 @@ void play_game(GameSession *session, char *path) {
             handle_turn(session, board1, session->ships1, session->player2_fd, session->player1_fd, &hits2, session->player2_name, &giveUp2, path,session->player1_ip,session->player2_ip);
 
             if (giveUp2) {
-                break;
+                break; 
             }
         }
 
         turn = !turn;
     }
 
-    if (hits1 >= totalHits) {
+    if (hits1 >= totalHits) { //Manda los mensajes al ganador y el perdedor cuando se cierra el loop de arriba
         send(session->player1_fd, "G", 1, 0);
         send(session->player2_fd, "P", 1, 0);
     
@@ -311,7 +311,7 @@ void play_game(GameSession *session, char *path) {
     
 }
 
-void *handle_games(void *arg) {
+void *handle_games(void *arg) { //Empieza el juego y manaja quien empieza
     ThreadArgs *args = (ThreadArgs *)arg;
     int new_socket = args->client_socket;
     char *path = args->path;
@@ -380,7 +380,7 @@ void *handle_games(void *arg) {
 }
 
 
-extern inline void accept_clients(Server* server, char* path, ServerState* state) {
+extern inline void accept_clients(Server* server, char* path, ServerState* state) { //manaja que se conecte el cliente. Antes estaba en protocolo.h
     int addrlen = sizeof(server->address);
     pthread_t thread_id;
 
@@ -425,18 +425,23 @@ extern inline void accept_clients(Server* server, char* path, ServerState* state
 }
 
 
-int main(int argc, char* argv[]) {
-    signal(SIGPIPE, SIG_IGN);
-    Server server;
+void stablish_connection(char* argv[]) {
+    Server server;  //Creamos las structuras para manejar las conecxiones
     ServerState state;
     state.current_session = 0;
-    pthread_mutex_init(&state.session_mutex, NULL);
+    pthread_mutex_init(&state.session_mutex, NULL); //Se crea el mutex para manejar los threads
     setup_server(&server, argv[1], argv[2]);
-    
+
     accept_clients(&server, argv[3], &state);
 
 
-    close(server.server_fd);
+    close(server.server_fd); //Esta funcion solo se debe cerrar cuando se le diga al servidor que se apage
+    return;
+}
+
+int main(int argc, char* argv[]) {
+    signal(SIGPIPE, SIG_IGN); //Ponemos esta bandera para que no se cierre el servidor cuando se cierra un socket de manera invalida.
+    stablish_connection(argv);
 
     return 0;
 }

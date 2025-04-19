@@ -66,7 +66,7 @@ void safe_log(const char* message, const char* path, const char* ip) {
 
     time_t now = time(NULL);
     struct tm* t = localtime(&now);
-    fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] Host IP: %s - %s (IP: %s)\n",
+    fprintf(log_file, "[%04d-%02d-%02d %02d:%02d:%02d] Host IP: %s - %s (IP: %s)\n", //Imprime la fecha en el log
             t->tm_year + 1900,
             t->tm_mon + 1,
             t->tm_mday,
@@ -114,7 +114,7 @@ void setShips(char board[10][10],struct ship ships[9], string username) {
 	cout << "\nJugador " << username << ", quieres colocar tus barcos (1 para sí o 0 para no)?\n";
 	bool randp;
 	cin >> randp;
-	char sizes[9] = { 1,1,1,2,2,3,3,4,5 };
+	char sizes[9] = { 1,1,1,2,2,3,3,4,5 }; //El arreglo con los tamaños de los barcos
 	for (int i = 0; i < 9; ++i) {
 	struct ship s;
 	bool put = false;
@@ -122,7 +122,7 @@ void setShips(char board[10][10],struct ship ships[9], string username) {
 			int x, y, size;
 			int dir;
 			if (randp) {
-				cout << "Barco #" << i + 1 << " de tamaño " << (int)sizes[i] <<" - Ingresa X Y Direccion(H=0/V=1): ";
+				cout << "Barco #" << i + 1 << " de tamaño " << (int)sizes[i] <<" - Ingresa X Y Direccion(H=0/V=1): "; //En este bloque el usuario pone los barcos manualmente
 				cin >> x >> y >> dir;
                 if(dir != 0 && dir != 1){
                     cout << "Dirección inválida. Debe ser 0 (horizontal) o 1 (vertical).\n";
@@ -130,7 +130,7 @@ void setShips(char board[10][10],struct ship ships[9], string username) {
                 }
 			}
 			else {
-				x = rand() % 10;
+				x = rand() % 10; //En este el programa pone los barcos de forma aleatoria
 				y = rand() % 10;
 				dir = rand() % 1;
 			}
@@ -140,14 +140,14 @@ void setShips(char board[10][10],struct ship ships[9], string username) {
 			s.size = sizes[i];
 			s.dir = dir;
 
-			bool cabe = (s.dir == 0 && ((s.posX + s.size) <= 10)) || (s.dir == 1 && ((s.posY + s.size) <= 10));
+			bool cabe = (s.dir == 0 && ((s.posX + s.size) <= 10)) || (s.dir == 1 && ((s.posY + s.size) <= 10)); //Una operación logica para saber si el barco cabe en las dimensiones del mapa.
 
 
 			if (placeShipSize(board, s) && cabe) {
 				ships[i] = s;
 				put = true;
 			}
-			else if (randp) {
+			else if (randp) { //Un else if para decirle al usuario que el barco no cabe, es un else if para no imprimirlo cuando esta en mode aleatorio.
 				cout << "Posicion inválida. Intenta de nuevo.\n";
 			}
 
@@ -158,7 +158,7 @@ void setShips(char board[10][10],struct ship ships[9], string username) {
 
 void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char secondBoard[SIZE][SIZE]) {
     cout << "  ";
-    for (int j = 0; j < SIZE; ++j) cout << j << " ";
+    for (int j = 0; j < SIZE; ++j) cout << j << " ";  //Imprime el mapa en base de la información de los barcos
     cout << "   "; 
     for (int j = 0; j < SIZE; ++j) cout << j << " ";
     cout << endl;
@@ -204,13 +204,13 @@ void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char secondBoard
     }
 }
 
-bool shoot(char board[SIZE][SIZE], int x, int y) {
+bool shoot(char board[SIZE][SIZE], int x, int y) { 
     if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) {
         cout << "Coordenadas invalidas.\n";
         return false;
     }
 
-    if (board[x][y] == 'B') {
+    if (board[x][y] == 'B') { //Actualisa el mapa del enemigo local para ver donde as atacado
         board[x][y] = 'X';
         cout << "¡Acierto!\n";
         return true;
@@ -225,7 +225,7 @@ bool shoot(char board[SIZE][SIZE], int x, int y) {
 }
 
 int countShoot(char board[SIZE][SIZE]) {
-    int count = 0;
+    int count = 0; //Cuenta los barcos golpiados para saber cuando acabar el juego.
     for (int i = 0; i < SIZE; ++i)
         for (int j = 0; j < SIZE; ++j)
             if (board[i][j] == 'X') count++;
@@ -233,7 +233,7 @@ int countShoot(char board[SIZE][SIZE]) {
 }
 
 int countShips(ship ships[TOTAL_SHIPS]){
-    int total = 0;
+    int total = 0; //para saber los golpes totales requeridos
     for (int i = 0; i < TOTAL_SHIPS; ++i){
         total += ships[i].size;
     }
@@ -260,7 +260,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
     W = wait
     */
 
-    while (true) {
+    while (true) { //Este ciclo es en el qeu se quedan hasta acabar la partida
         memset(buffer, 0, sizeof(buffer));
         int received = recv(sock, buffer, sizeof(buffer), 0);
         if (received <= 0) {
@@ -273,7 +273,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
         log_msg << "FLAG: " << buffer[0] << " | MENSAJE: " << msg;
         safe_log(log_msg.str().c_str(), path, server_ip);
 
-        if (buffer[0] == 't') {
+        if (buffer[0] == 't') {  //Cada if es un caso diferente de lo que pasa cada turno.
             cout << "\n>>> Es tu turno de atacar.\n";
 
             cout << "Tienes 30 segundos para ingresar tus coordenadas (Digite las coordenadas 10 10 para rendirse).\n";
@@ -416,12 +416,12 @@ void chat_with_server(int client_fd,char* path,const char* server_ip) {
     
     char board1[SIZE][SIZE];
     char board2[SIZE][SIZE];
-    ship ships1[TOTAL_SHIPS];
+    ship ships1[TOTAL_SHIPS];  //Iniicialisamos las variables.
 
     initializeBoard(board1);
     initializeBoard(board2);
     setShips(board1, ships1, username);
-    showBoard(board1, ships1, board2);
+    showBoard(board1, ships1, board2);  //Se conectan los jugadores y empieza la partida
 
     std::cout << "\n\nEsperando oponente\n\n";
     char log_msg[512];
@@ -439,34 +439,29 @@ void chat_with_server(int client_fd,char* path,const char* server_ip) {
 }
 
 inline void randSeed() {
-    time_t tiempo;
+    time_t tiempo; //Se genera la semilla las funciones de azar usando la hora del sistema.
     time(&tiempo);
     //printf("%d", tiempo);
     srand(tiempo);
     //printf("\n%d", rand());
 }
 
-int main(int argc, char* argv[]) {
-
-    // Conexiones de cliente a socket
-    randSeed();
+inline void start(char* log) {
     Config config;
     parse_config("address.config", config.server_ip, &config.PORTLINUX);
 
     
-
-
-    while(true){
+    while (true) { //Se maneja la conexion y luego se empieza el juego.
         auto [client_fd, server_ip] = connect_to_server(config);
         if (client_fd < 0) return -1;
 
-        chat_with_server(client_fd,argv[1],server_ip.c_str());
+        chat_with_server(client_fd, log, server_ip.c_str());
 
         int playing;
         cout << "\n¿Quieres jugar otra partida? (1 = sí / 0 = no): ";
         cin >> playing;
 
-        if(!playing){
+        if (!playing) {
             cout << "Gracias por jugar. ¡Hasta la próxima!\n";
             break;
         }
@@ -474,6 +469,14 @@ int main(int argc, char* argv[]) {
         close(client_fd);
 
     }
+    return;
+}
+
+int main(int argc, char* argv[]) {
+
+    // Conexiones de cliente a socket
+    randSeed();
+    start(argv[1]);
 
     return 0;
 }
