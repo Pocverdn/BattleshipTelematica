@@ -184,7 +184,7 @@ En cuanto a las metas conseguidas según las rúbricas puestas en clases, hemos 
 ## Aspectos no logrados:
 
 ### Cliente:
-    No podemos actualizar el tiempo en el cliente, además de que el turno no pasa.
+    Todos los requisitos fueron cumplidos.
 
 ### Servidor:
     Todos los requisitos fueron cumplidos.
