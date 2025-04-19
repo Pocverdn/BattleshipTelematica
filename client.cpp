@@ -285,7 +285,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             while (remainingTime > 0) {
                 fd_set readfds;
                 struct timeval timeout;
-                timeout.tv_sec = 6; // Verificar cada segundo
+                timeout.tv_sec = 10; // Verificar cada segundo
                 timeout.tv_usec = 0;
             
                 FD_ZERO(&readfds);
@@ -307,7 +307,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
                     break;
                 }
             
-                remainingTime=remainingTime-6;
+                remainingTime=remainingTime-10;
             }
 
             att.posX = x;
