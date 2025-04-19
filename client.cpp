@@ -269,7 +269,9 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
         }
 
         string msg(buffer);
-        safe_log(msg.c_str(), path, server_ip);
+        std::ostringstream log_msg;
+        log_msg << "FLAG: " << buffer[0] << " | MENSAJE: " << msg;
+        safe_log(log_msg.str().c_str(), path, server_ip);
 
         if (buffer[0] == 't') {
             cout << "\n>>> Es tu turno de atacar.\n";
@@ -339,19 +341,34 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             }
 
             trim(msg = string(buffer));
+            std::ostringstream log_msg2;
+            log_msg2 << buffer[0] << " | MENSAJE: " << msg;
+            safe_log(log_msg2.str().c_str(), path, server_ip);
 
             if (buffer[0] == 'D') {
+                std::ostringstream resLog;
                 enemyBoard[att.posX][att.posY] = 'X';
                 cout << "¡Acierto!\n\n";
                 totalHits++;
+                resLog << "D | Acierto. Total aciertos: " << totalHits << "/" << totalHitsNeeded;
+                safe_log(resLog.str().c_str(), path, server_ip);
+            
             } else if (buffer[0] == 'H') {
+                std::ostringstream resLog;
                 enemyBoard[att.posX][att.posY] = 'X';
                 cout << "\n💥 ¡Hundiste el barco! 💥\n\n";
                 totalHits++;
+                resLog << "H | Hundido. Total aciertos: " << totalHits << "/" << totalHitsNeeded;
+                safe_log(resLog.str().c_str(), path, server_ip);
+            
             } else if (buffer[0] == 'A') {
+                std::ostringstream resLog;
                 enemyBoard[att.posX][att.posY] = 'O';
                 cout << "\n¡Agua!\n\n";
+                resLog << "A | Agua.";
+                safe_log(resLog.str().c_str(), path, server_ip);
             }
+            
 
             showBoard(board, ships, enemyBoard);
 
@@ -367,12 +384,22 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
 
         } else if (buffer[0] == 'w') {
             cout << "\n Turno del enemigo \n";
-
-        } else if (buffer[0] == 'G') {
+        
+            std::ostringstream log_msg;
+            log_msg << "w | MENSAJE: Turno del enemigo";
+            safe_log(log_msg.str().c_str(), path, server_ip);
+        }
+        else if (buffer[0] == 'G') {
+            std::ostringstream winLog;
+            winLog << "G | Resultado: Has ganado la partida.";
+            safe_log(winLog.str().c_str(), path, server_ip);
             cout << "\n🎉 ¡Has ganado la partida!\n\n";
             break;
 
         } else if (buffer[0] == 'P') {
+            std::ostringstream loseLog;
+            loseLog << "P | Resultado: Has perdido la partida.";
+            safe_log(loseLog.str().c_str(), path, server_ip);
             cout << "\n😢 Has perdido la partida.\n\n";
             break;
             
