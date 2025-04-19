@@ -267,9 +267,9 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             cerr << "Conexión cerrada o error.\n";
             break;
         }
-
+        string msg(buffer);
         if (buffer[0] == 't') {  //Cada if es un caso diferente de lo que pasa cada turno.
-            string msg(buffer);
+            
             std::ostringstream log_msg;
             log_msg << buffer[0] << " | MENSAJE: Tu turno " << msg;
             safe_log(log_msg.str().c_str(), path, server_ip);
