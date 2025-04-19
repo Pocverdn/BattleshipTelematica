@@ -317,8 +317,6 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             safe_log(oss.str().c_str(), path, server_ip);
             unsigned char serialized = encodeAttack(att);
 
-            system("clear");
-
             if ((att.posX == 10 && att.posY == 10)) {
 
                 send(sock, &serialized, sizeof(serialized), 0);
@@ -453,7 +451,7 @@ inline void start(char* log) {
     
     while (true) { //Se maneja la conexion y luego se empieza el juego.
         auto [client_fd, server_ip] = connect_to_server(config);
-        if (client_fd < 0) return -1;
+        if (client_fd < 0) return;
 
         chat_with_server(client_fd, log, server_ip.c_str());
 
@@ -465,6 +463,8 @@ inline void start(char* log) {
             cout << "Gracias por jugar. ¡Hasta la próxima!\n";
             break;
         }
+
+        system("clear");
 
         close(client_fd);
 
