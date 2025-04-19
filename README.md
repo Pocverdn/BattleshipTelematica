@@ -154,7 +154,7 @@ En general, el log sigue la estructura de *<date> <time> <clientIP> <query> <res
 
 En cuanto a las metas conseguidas según las rúbricas puestas en clases, hemos conseguido lo siguiente:
 
-## Metas conseguidas
+## Aspectos logrados
 
 ### Cliente:
     El tablero propio con la posición de los barcos del jugador.
@@ -181,7 +181,7 @@ En cuanto a las metas conseguidas según las rúbricas puestas en clases, hemos 
     Implementar un temporizador para limitar la duración de cada turno a 30 segundos.
     Finalizar las partidas cuando se cumpla la condición de victoria.
 
-## Metas no conseguidas:
+## Aspectos no logrados:
 
 ### Cliente:
     No podemos actualizar el tiempo en el cliente, además de que el turno no pasa.
