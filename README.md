@@ -21,6 +21,19 @@ La estructura es, IP, puerto y luego el log:
 
 **./server.out IP puerto path/log**
 
+
+## Como se juega
+
+A continuación mostraremos imagenes de como introducir cada uno de los datos
+
+### Barcos (Manual)
+![image](https://github.com/user-attachments/assets/d9e9603c-d45f-4431-beb3-b1b36d4d7deb)
+
+
+### Ataques
+![image](https://github.com/user-attachments/assets/30f5e993-e30e-4da3-9af6-8ac5b7994e47)
+![image](https://github.com/user-attachments/assets/ab484ebb-8427-4f46-88bf-f929e3b8fe06)
+
 # Introducción
 
 El trabajo trata de un juego de batalla naval, donde un servidor desarrollado en C, y 2 o más clientes desarrollados en C++, pueden jugar partidas en las cuales se permite realizar las acciones típicas del juego de mesa tales como:
@@ -170,7 +183,7 @@ En cuanto a las metas conseguidas según las rúbricas puestas en clases, hemos 
     Gestionar turnos entre los jugadores.
     Detectar y gestionar desconexiones de clientes.
     Registrar en un archivo de log todas las acciones importantes que ocurren en el servidor.
-    Implementar un temporizador para limitar la duración de cada turno a 30 segundos.
+    Implementar un temporizador para limitar la duración de cada turno a 30 segundos (Al final del timer el cliente ataca automáticamente en 0 0).
     Finalizar las partidas cuando se cumpla la condición de victoria.
 
 ## Aspectos no logrados:
