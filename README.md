@@ -75,14 +75,7 @@ El codigo de cliente proporciona al jugador con una interfaz visual en la cual p
 
 Cliente de igual forma que server, contiene las funciones relacionadas con la logica del juego y codificación/decodificación, de esta manera se puede procesar, codificar y enviar datos concretos al servidor, para que este responda de manera correcta. La explicación de las funciones son las siguientes:
 
-    unsigned char* encode(ship[]): Codifica los datos de 9 barcos en un arreglo de 14 bytes, optimizando el uso de bits.
-    
-    ship* decode(const unsigned char[]): Reconstruye los barcos desde la representación binaria compacta.
-    
-    unsigned char encodeAttack(attack): Codifica un ataque en 1 byte.
-    
-    attack decodeAttack(unsigned char): Decodifica un ataque de 1 byte a estructura.
-
+   
     initializeBoard: Inicializa el tablero con agua sin revelar (~).
 
     placeShipSize: Verifica si un barco cabe en el tablero y si el espacio está disponible.
