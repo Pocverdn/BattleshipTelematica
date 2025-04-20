@@ -2,21 +2,21 @@
 ## Como correr el programa.
 
 ### client.out
-El programa esta diseñado para funcionar con el sistema operativo linux.
-Se necesita un archivo address.config para decirle al cliente donde se va a conectar.
+El programa está diseñado para funcionar con el sistema operativo Linux.
+Se necesita un archivo address.config para decirle al cliente dónde se va a conectar.
 La estructura de este archivo debe ser:
 
 **serverip= IP a conectarse**
 
 **port=el puerto.**
 
-El cliente requiere requiere un log, este puede crear un log si no existe uno, pero aun necesita que se le espesifique donde crearlo.
+El cliente requiere un log. Este puede crear un log si no existe uno, pero aún necesita que se le especifique dónde crearlo.
 
 **./client.out path/log**
 
 ### server.out
-Al igual que el cliente requiere que se le espesifique donde queda el archivo de log, si no encunetra alguno, el programa crea uno en esa ubicación.
-Ademas de esto el servidor necesita que se le da la IP y el puerto donde se va a hostiar por consola.
+Al igual que el cliente requiere que se le especifique dónde queda el archivo de log, si no encuentra alguno, el programa crea uno en esa ubicación.
+Además de esto, el servidor necesita que se le dé la IP y el puerto donde se va a hostiar por consola.
 La estructura es, IP, puerto y luego el log:
 
 **./server.out IP puerto path/log**
@@ -65,9 +65,8 @@ Las tecnologias empleadas son:
     Sistema operativo: Linux
     Modelo de red: TCP/IP
     Bibliotecas:
+    
 ![image](https://github.com/user-attachments/assets/eb579cb3-4227-4f71-9ffd-580c37aabfe8)
-
-
 
 ## Cliente.cpp
 
@@ -190,11 +189,13 @@ Nuestro proyecto implementa un juego de batalla naval. Para esto utilizamos sock
     
     La implementación está basada en TCP, ya que TCP garantiza la entrega confiable de datos.
 
+Adicionalmente, utilizamos Threads con el objetivo de hacer el servidor concurrente, es decir, que es capaz de manejar hasta un máximo de 10 partidas en simultáneo.
+
 ## Flujo:
 
 ### Cliente:
 
-    El cliente se conecta al servidor, registra al usuario (nombre y correo electrónico) y envía la configuración inicial de los barcos.
+    El cliente se conecta al servidor, registra al usuario (nombre y correo electrónico) y envía la posición inicial de los barcos.
     
     Durante el juego, el cliente envía ataques al servidor y recibe respuestas que indican si el ataque fue un acierto, un fallo, o si hundió un barco.
 
