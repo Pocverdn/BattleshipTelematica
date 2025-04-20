@@ -449,7 +449,16 @@ inline void randSeed() {
 inline void start(char* log) {
     Config config;
     parse_config("address.config", config.server_ip, &config.PORTLINUX);
-
+    while (strlen(log) == 0) {
+        printf("Log path cannot be empty. Please enter a valid log path: ");
+        fgets(log, 256, stdin);
+        
+        // Remove trailing newline, if present
+        size_t len = strlen(log);
+        if (len > 0 && log[len - 1] == '\n') {
+            log[len - 1] = '\0';
+        }
+    }
     
     while (true) { //Se maneja la conexion y luego se empieza el juego.
         auto [client_fd, server_ip] = connect_to_server(config);
@@ -475,10 +484,13 @@ inline void start(char* log) {
 }
 
 int main(int argc, char* argv[]) {
-
-    // Conexiones de cliente a socket
+    char log[256] = "";
     randSeed();
-    start(argv[1]);
+    if (argc > 1) {
+        strncpy(log, argv[1], sizeof(log) - 1);
+    }
+    // Conexiones de cliente a socket
+    start(log);
 
     return 0;
 }
