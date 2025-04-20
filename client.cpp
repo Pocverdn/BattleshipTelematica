@@ -206,20 +206,20 @@ void showBoard(char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char secondBoard
 
 bool shoot(char board[SIZE][SIZE], int x, int y) { 
     if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) {
-        cout << "Coordenadas invalidas.\n";
+        cout << "\nCoordenadas invalidas.\n";
         return false;
     }
 
     if (board[x][y] == 'B') { //Actualisa el mapa del enemigo local para ver donde as atacado
         board[x][y] = 'X';
-        cout << "¡Acierto!\n";
+        cout << "\n\n¡Acierto!\n\n";
         return true;
     } else if (board[x][y] == 'X' || board[x][y] == 'O') {
-        cout << "Ya disparaste ahí. Pierdes turno.\n";
+        cout << "\nYa disparaste ahí. Pierdes turno.\n";
         return false;
     } else {
         board[x][y] = 'O';
-        cout << "¡Agua!\n";
+        cout << "\n\n¡Agua!\n\n";
         return false;
     }
 }
@@ -267,16 +267,14 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             cerr << "Conexión cerrada o error.\n";
             break;
         }
-        string msg(buffer);
 
-        cout << buffer[0];
         if (buffer[0] == 't') {  //Cada if es un caso diferente de lo que pasa cada turno.
             
             std::ostringstream log_msg;
             log_msg << buffer[0] << " | MENSAJE: Tu turno " << msg;
             safe_log(log_msg.str().c_str(), path, server_ip);
             
-            cout << "\n>>> Es tu turno de atacar.\n";
+            cout << "\n>>> Es tu turno de atacar.\n\n";
 
             cout << "Tienes 30 segundos para ingresar tus coordenadas (Digite las coordenadas 10 10 para rendirse).\n";
 
@@ -348,7 +346,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             if (buffer[0] == 'D') {
                 std::ostringstream resLog;
                 enemyBoard[att.posX][att.posY] = 'X';
-                cout << "¡Acierto!\n\n";
+                cout << "\n\n¡Acierto!\n\n";
                 totalHits++;
                 resLog << "D | Acierto. Total aciertos: " << totalHits << "/" << totalHitsNeeded;
                 safe_log(resLog.str().c_str(), path, server_ip);
@@ -356,7 +354,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             } else if (buffer[0] == 'H') {
                 std::ostringstream resLog;
                 enemyBoard[att.posX][att.posY] = 'X';
-                cout << "\n💥 ¡Hundiste el barco! 💥\n\n";
+                cout << "\n\n💥 ¡Hundiste el barco! 💥\n\n";
                 totalHits++;
                 resLog << "H | Hundido. Total aciertos: " << totalHits << "/" << totalHitsNeeded;
                 safe_log(resLog.str().c_str(), path, server_ip);
@@ -364,7 +362,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             } else if (buffer[0] == 'A') {
                 std::ostringstream resLog;
                 enemyBoard[att.posX][att.posY] = 'O';
-                cout << "\n¡Agua!\n\n";
+                cout << "\n\n¡Agua!\n\n";
                 resLog << "A | Agua.";
                 safe_log(resLog.str().c_str(), path, server_ip);
             }
