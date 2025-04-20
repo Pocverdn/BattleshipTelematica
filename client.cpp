@@ -251,6 +251,7 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
     T = timeout.
     t = turno.
     S = surrender.
+    C = Desconexión.
     D = le diste.
     d = te dieron.
     G = ganaste.
@@ -401,6 +402,13 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             loseLog << "P | Resultado: Has perdido la partida.";
             safe_log(loseLog.str().c_str(), path, server_ip);
             cout << "\n😢 Has perdido la partida.\n\n";
+            break;
+            
+        } else if (buffer[0] == 'C') {
+            std::ostringstream loseLog;
+            loseLog << "C | Resultado: Un jugador se ha desconectado.";
+            safe_log(loseLog.str().c_str(), path, server_ip);
+            cout << "\n😢 Un jugador se ha desconectado.\n\n";
             break;
             
         }

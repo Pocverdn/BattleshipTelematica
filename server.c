@@ -178,7 +178,7 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     int bytes = recv(attacker_fd, &at, 1, 0);
     if (bytes <= 0) {
         perror("Error recibiendo ataque");
-        send(defender_fd, "G", 1, 0);
+        send(defender_fd, "X", 1, 0);
         *giveUp = true;
         return;
     }
@@ -187,12 +187,14 @@ void handle_turn(GameSession *session, char board[SIZE][SIZE], struct ship ships
     T = timeout.
     t = turno.
     S = surrender.
+    C = Desconexión.
     D = le diste.
     d = te dieron.
     G = ganaste.
     P = perdiste.
     H = hundiste.
     A = agua.
+    W = wait
     */
 
 
