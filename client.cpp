@@ -268,6 +268,8 @@ void game(int sock, char board[SIZE][SIZE], ship ships[TOTAL_SHIPS], char enemyB
             break;
         }
 
+        string msg(buffer);
+
         if (buffer[0] == 't') {  //Cada if es un caso diferente de lo que pasa cada turno.
             
             std::ostringstream log_msg;
